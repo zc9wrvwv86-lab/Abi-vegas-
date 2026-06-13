@@ -35,7 +35,14 @@ const QUESTIONS = {
   ]
 };
 
-const state = { stake: 20, bet: { type: "color", value: "red", label: "Rot", multiplier: 2 }, rotation: 0, pending: null, scores: Object.fromEntries(CLASSES.map(k => [k, 0])) };
+const state = {
+  stake: 20,
+  bet: { type: "color", value: "red", label: "Rot", multiplier: 2 },
+  rotation: 0,
+  ballRotation: 0,
+  pending: null,
+  scores: Object.fromEntries(CLASSES.map(k => [k, 0]))
+};
 const classSelect = document.querySelector("#classSelect");
 const svg = document.querySelector("#rouletteSvg");
 const table = document.querySelector("#rouletteTable");
@@ -47,6 +54,7 @@ const leaderboard = document.querySelector("#leaderboard");
 function q(text, choices, correctIndex) { return { text, choices, correctIndex }; }
 function formatClassName(k) { return k === "Lehrer" ? "Lehrer" : `${k}. Klasse`; }
 function ns(name) { return document.createElementNS("http://www.w3.org/2000/svg", name); }
+function normalizeAngle(angle) { return ((angle % 360) + 360) % 360; }
 
 function init() {
   classSelect.innerHTML = CLASSES.map(k => `<option value="${k}">${formatClassName(k)}</option>`).join("");
@@ -59,6 +67,7 @@ function init() {
   buildTable();
   updateStakeButtons();
   renderBetStatus();
+  resetQuestionPanel();
   loadScores();
 }
 
@@ -66,6 +75,7 @@ function buildWheel() {
   svg.innerHTML = "";
   const group = ns("g");
   group.id = "wheelGroup";
+  group.style.transformOrigin = "260px 260px";
   svg.appendChild(group);
 
   const bg = ns("circle");
@@ -105,6 +115,19 @@ function buildWheel() {
   const label = ns("text");
   label.setAttribute("x", 260); label.setAttribute("y", 266); label.setAttribute("text-anchor", "middle"); label.setAttribute("fill", "#fff7dc"); label.setAttribute("font-size", "18"); label.setAttribute("font-weight", "900"); label.textContent = "ABW";
   group.appendChild(label);
+
+  const ballGroup = ns("g");
+  ballGroup.id = "ballGroup";
+  ballGroup.style.transformOrigin = "260px 260px";
+  ballGroup.style.transition = "transform 2.4s cubic-bezier(.12,.84,.18,1)";
+  const ballTrack = ns("circle");
+  ballTrack.setAttribute("cx", 260); ballTrack.setAttribute("cy", 260); ballTrack.setAttribute("r", 186); ballTrack.setAttribute("fill", "none"); ballTrack.setAttribute("stroke", "rgba(30,30,30,.18)"); ballTrack.setAttribute("stroke-width", "4");
+  const ball = ns("circle");
+  ball.setAttribute("cx", 260); ball.setAttribute("cy", 74); ball.setAttribute("r", 9); ball.setAttribute("fill", "#fff"); ball.setAttribute("stroke", "#d9cfa8"); ball.setAttribute("stroke-width", "2");
+  ball.setAttribute("filter", "drop-shadow(0 0 6px rgba(255,255,255,.85))");
+  ballGroup.appendChild(ballTrack);
+  ballGroup.appendChild(ball);
+  svg.appendChild(ballGroup);
 }
 
 function buildTable() {
@@ -173,16 +196,31 @@ function renderBetStatus() {
   betStatus.textContent = `Aktueller Einsatz: ${state.stake} Chips auf ${state.bet.label}. ${rule?.note || ""}. Gewinnchance: x${state.bet.multiplier} = ${capped} Chips${capText}.`;
 }
 
+function resetQuestionPanel() {
+  state.pending = null;
+  questionPanel.classList.add("empty");
+  questionPanel.innerHTML = "<p>Nach einem Treffer erscheint hier die Frage.</p>";
+}
+
 async function spin() {
   if (state.pending) { resultText.textContent = "Beantworte erst die aktuelle Frage."; return; }
+  resetQuestionPanel();
   enforceStakeLimit();
   const outcome = randomOutcome();
   const idx = WHEEL_ORDER.indexOf(String(outcome.value));
   const step = 360 / WHEEL_ORDER.length;
-  state.rotation += 1440 + (360 - idx * step);
+
+  const currentAngle = normalizeAngle(state.rotation);
+  const targetAngle = normalizeAngle(360 - idx * step);
+  const deltaToTarget = normalizeAngle(targetAngle - currentAngle);
+  state.rotation += 1440 + deltaToTarget;
+
   const group = document.querySelector("#wheelGroup");
+  const ballGroup = document.querySelector("#ballGroup");
   group.style.transform = `rotate(${state.rotation}deg)`;
   group.classList.add("spinning");
+  state.ballRotation -= 1800 + deltaToTarget;
+  if (ballGroup) ballGroup.style.transform = `rotate(${state.ballRotation}deg)`;
   resultText.textContent = "Das Rad dreht ...";
   await sleep(2400);
   group.classList.remove("spinning");
