@@ -4,6 +4,15 @@ const RED_NUMBERS = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 
 const WHEEL_ORDER = ["0", "32", "15", "19", "4", "21", "2", "25", "17", "34", "6", "27", "13", "36", "11", "30", "8", "23", "10", "5", "24", "16", "33", "1", "20", "14", "31", "9", "22", "18", "29", "7", "28", "12", "35", "3", "26"];
 const TABLE_ROWS = [[3,6,9,12,15,18,21,24,27,30,33,36],[2,5,8,11,14,17,20,23,26,29,32,35],[1,4,7,10,13,16,19,22,25,28,31,34]];
 const SUBJECTS = ["Mathe","Deutsch","Englisch","Bio","Mathe","Erdkunde","Jackpot","Sport","Geschichte","Deutsch","Englisch","Mathe","Kunst/Musik","Bio","Schule","Abi Vegas","Geschichte","Sport","Englisch","Deutsch","Erdkunde","Mathe","Schule","Abi Vegas"];
+const MAX_WIN_PER_SPIN = 200;
+const BET_RULES = {
+  number: { maxStake: 20, label: "Einzelzahl", note: "0–36, maximal 20 Chips" },
+  color: { maxStake: 50, label: "Farbe", note: "Rot/Schwarz, maximal 50 Chips" },
+  parity: { maxStake: 50, label: "Gerade/Ungerade", note: "EVEN/ODD, maximal 50 Chips" },
+  range: { maxStake: 50, label: "Bereich", note: "1–18 oder 19–36, maximal 50 Chips" },
+  dozen: { maxStake: 30, label: "Dutzend", note: "1st/2nd/3rd 12, maximal 30 Chips" },
+  column: { maxStake: 30, label: "Reihe", note: "2:1 Reihe, maximal 30 Chips" }
+};
 const QUESTIONS = {
   easy: [
     q("Was ist 7 × 8?", ["54", "56", "64", "49"], 1),
@@ -48,6 +57,8 @@ function init() {
   document.querySelector("#refreshButton").addEventListener("click", loadScores);
   buildWheel();
   buildTable();
+  updateStakeButtons();
+  renderBetStatus();
   loadScores();
 }
 
@@ -97,31 +108,74 @@ function buildWheel() {
 }
 
 function buildTable() {
-  table.innerHTML = `<div class="zero-column">${cell("0", "number", "0", "0", 8, "zero-cell")}${cell("00", "number", "00", "00", 8, "zero-cell")}</div><div class="main-table">${TABLE_ROWS.map((row, rowIndex) => `<div class="number-row">${row.map(numberCell).join("")}${cell("2:1", "column", rowIndex, `2:1 Reihe ${rowIndex + 1}`, 3, "")}</div>`).join("")}<div class="dozen-row">${cell("1st 12", "dozen", 1, "1st 12", 3, "")}${cell("2nd 12", "dozen", 2, "2nd 12", 3, "")}${cell("3rd 12", "dozen", 3, "3rd 12", 3, "")}</div><div class="outside-row">${cell("1–18", "range", "low", "1 bis 18", 2, "")}${cell("EVEN", "parity", "even", "EVEN", 2, "")}${cell("◆", "color", "red", "Rot", 2, "red-diamond selected")}${cell("◆", "color", "black", "Schwarz", 2, "black-diamond")}${cell("ODD", "parity", "odd", "ODD", 2, "")}${cell("19–36", "range", "high", "19 bis 36", 2, "")}</div></div>`;
+  table.innerHTML = `<div class="zero-column zero-single">${cell("0", "number", "0", "0", 10, "zero-cell")}</div><div class="main-table">${TABLE_ROWS.map((row, rowIndex) => `<div class="number-row">${row.map(numberCell).join("")}${cell("2:1", "column", rowIndex, `2:1 Reihe ${rowIndex + 1}`, 3, "")}</div>`).join("")}<div class="dozen-row">${cell("1st 12", "dozen", 1, "1st 12", 3, "")}${cell("2nd 12", "dozen", 2, "2nd 12", 3, "")}${cell("3rd 12", "dozen", 3, "3rd 12", 3, "")}</div><div class="outside-row">${cell("1–18", "range", "low", "1 bis 18", 2, "")}${cell("EVEN", "parity", "even", "EVEN", 2, "")}${cell("◆", "color", "red", "Rot", 2, "red-diamond selected")}${cell("◆", "color", "black", "Schwarz", 2, "black-diamond")}${cell("ODD", "parity", "odd", "ODD", 2, "")}${cell("19–36", "range", "high", "19 bis 36", 2, "")}</div></div>`;
   table.querySelectorAll(".bet-cell").forEach(btn => btn.addEventListener("click", () => selectBet(btn)));
 }
 
 function cell(text, type, value, label, multiplier, extra) {
-  return `<button class="bet-cell ${extra}" data-type="${type}" data-value="${value}" data-label="${label}" data-multiplier="${multiplier}">${text}</button>`;
+  const rule = BET_RULES[type];
+  const maxStake = rule ? rule.maxStake : 50;
+  return `<button class="bet-cell ${extra}" data-type="${type}" data-value="${value}" data-label="${label}" data-multiplier="${multiplier}" data-max-stake="${maxStake}">${text}</button>`;
 }
 function numberCell(n) { return cell(n, "number", n, n, 8, RED_NUMBERS.has(n) ? "num-red" : "num-black"); }
 
 function selectStake(btn) {
-  document.querySelectorAll("[data-stake]").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  state.stake = Number(btn.dataset.stake);
+  const requestedStake = Number(btn.dataset.stake);
+  const maxStake = getMaxStakeForCurrentBet();
+  if (requestedStake > maxStake) {
+    resultText.textContent = `Für ${state.bet.label} sind maximal ${maxStake} Chips Einsatz erlaubt.`;
+    setStake(maxStake);
+    return;
+  }
+  setStake(requestedStake);
+}
+
+function setStake(value) {
+  state.stake = value;
+  document.querySelectorAll("[data-stake]").forEach(b => b.classList.toggle("active", Number(b.dataset.stake) === value));
+  updateStakeButtons();
   renderBetStatus();
 }
+
 function selectBet(btn) {
   table.querySelectorAll(".bet-cell").forEach(b => b.classList.remove("selected"));
   btn.classList.add("selected");
   state.bet = { type: btn.dataset.type, value: btn.dataset.value, label: btn.dataset.label, multiplier: Number(btn.dataset.multiplier) };
+  enforceStakeLimit();
   renderBetStatus();
 }
-function renderBetStatus() { betStatus.textContent = `Aktueller Einsatz: ${state.stake} Chips auf ${state.bet.label}. Gewinnchance: x${state.bet.multiplier}.`; }
+
+function getMaxStakeForCurrentBet() {
+  return BET_RULES[state.bet.type]?.maxStake || 50;
+}
+
+function enforceStakeLimit() {
+  const maxStake = getMaxStakeForCurrentBet();
+  if (state.stake > maxStake) state.stake = maxStake;
+  updateStakeButtons();
+}
+
+function updateStakeButtons() {
+  const maxStake = getMaxStakeForCurrentBet();
+  document.querySelectorAll("[data-stake]").forEach(btn => {
+    const value = Number(btn.dataset.stake);
+    btn.disabled = value > maxStake;
+    btn.title = value > maxStake ? `Maximal ${maxStake} Chips für diese Wettart` : "";
+    btn.classList.toggle("active", value === state.stake);
+  });
+}
+
+function renderBetStatus() {
+  const rule = BET_RULES[state.bet.type];
+  const theoretical = state.stake * state.bet.multiplier;
+  const capped = Math.min(theoretical, MAX_WIN_PER_SPIN);
+  const capText = theoretical > MAX_WIN_PER_SPIN ? `, gedeckelt auf ${MAX_WIN_PER_SPIN}` : "";
+  betStatus.textContent = `Aktueller Einsatz: ${state.stake} Chips auf ${state.bet.label}. ${rule?.note || ""}. Gewinnchance: x${state.bet.multiplier} = ${capped} Chips${capText}.`;
+}
 
 async function spin() {
   if (state.pending) { resultText.textContent = "Beantworte erst die aktuelle Frage."; return; }
+  enforceStakeLimit();
   const outcome = randomOutcome();
   const idx = WHEEL_ORDER.indexOf(String(outcome.value));
   const step = 360 / WHEEL_ORDER.length;
@@ -135,11 +189,13 @@ async function spin() {
 
   const hit = matches(state.bet, outcome);
   const outcomeText = outcome.isZero ? String(outcome.value) : `${outcome.value} / ${outcome.color === "red" ? "Rot" : "Schwarz"}`;
-  if (!hit) { resultText.textContent = `Gelande auf ${outcomeText}. Kein Treffer.`; return; }
-  const points = state.stake * state.bet.multiplier;
+  if (!hit) { resultText.textContent = `Gelande auf ${outcomeText}. Kein Treffer. Bei 0 gewinnen nur direkte 0-Wetten.`; return; }
+  const theoreticalPoints = state.stake * state.bet.multiplier;
+  const points = Math.min(theoreticalPoints, MAX_WIN_PER_SPIN);
   const question = randomQuestion();
   state.pending = { question, points };
-  resultText.textContent = `Treffer auf ${outcomeText}. Frage richtig = ${points} Chips.`;
+  const capText = theoreticalPoints > MAX_WIN_PER_SPIN ? ` Der Gewinn ist auf ${MAX_WIN_PER_SPIN} Chips gedeckelt.` : "";
+  resultText.textContent = `Treffer auf ${outcomeText}. Frage richtig = ${points} Chips.${capText}`;
   showQuestion(question, points);
 }
 
