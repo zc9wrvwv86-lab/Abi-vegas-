@@ -91,6 +91,12 @@ select {
   border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
+select option {
+  color: #18070b;
+  background: #fff7dc;
+  font-weight: 800;
+}
+
 .slot-machine {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
