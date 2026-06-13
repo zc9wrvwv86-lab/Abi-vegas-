@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Abi Roulette – Abi Vegas</title>
+    <meta name="description" content="Abi Vegas Roulette-Spiel mit Klassenpunkten" />
+    <link rel="stylesheet" href="roulette-page.css" />
+  </head>
+  <body>
+    <main class="roulette-page">
+      <nav class="topbar">
+        <a href="index.html">← Zurück</a>
+        <strong>ABW · Abi Vegas</strong>
+      </nav>
+
+      <section class="hero-panel">
+        <p class="eyebrow">Abi Roulette</p>
+        <h1>Roulette-Tisch der Punkte</h1>
+        <p>Wähle deine Klasse, setze Chips und beantworte die Frage, wenn dein Feld trifft.</p>
+      </section>
+
+      <section class="settings-panel panel">
+        <label for="classSelect">Deine Klasse</label>
+        <select id="classSelect"></select>
+      </section>
+
+      <section class="roulette-layout">
+        <section class="wheel-panel panel">
+          <div class="pointer">▼</div>
+          <svg id="rouletteSvg" viewBox="0 0 520 520" role="img" aria-label="Roulette-Rad"></svg>
+          <p id="rouletteResult" class="result-text">Wähle Einsatz und Feld. Dann drehen.</p>
+        </section>
+
+        <section class="table-panel panel">
+          <h2>Einsatz</h2>
+          <div id="stakeButtons" class="stake-row">
+            <button data-stake="10">10</button>
+            <button data-stake="20" class="active">20</button>
+            <button data-stake="30">30</button>
+            <button data-stake="50">50</button>
+          </div>
+
+          <p id="betStatus" class="bet-status">Aktueller Einsatz: 20 Chips auf Rot.</p>
+          <div id="rouletteTable" class="roulette-table"></div>
+          <button id="spinButton" class="spin-button">Roulette drehen</button>
+        </section>
+      </section>
+
+      <section id="questionPanel" class="panel question-panel empty">
+        <p>Nach einem Treffer erscheint hier die Frage.</p>
+      </section>
+
+      <section class="panel leaderboard-panel">
+        <div class="section-head">
+          <h2>Live-Rangliste</h2>
+          <button id="refreshButton">Aktualisieren</button>
+        </div>
+        <ol id="leaderboard"></ol>
+      </section>
+    </main>
+
+    <script src="roulette-page.js"></script>
+  </body>
+</html>
