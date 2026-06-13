@@ -6,7 +6,6 @@
     <title>Abi Vegas – um jeden Punkt gepokert</title>
     <meta name="description" content="Abi Vegas Casino-Spiel für den Abi-Gag" />
     <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="roulette-fix.css" />
   </head>
   <body>
     <div class="vegas-bg" aria-hidden="true">
@@ -48,6 +47,17 @@
         <div id="chipBurst" class="chip-burst" aria-hidden="true"></div>
       </section>
 
+      <section class="card casino-panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow" style="margin-bottom: 4px; font-size: .72rem;">Weiteres Spiel</p>
+            <h2>Abi-Roulette</h2>
+          </div>
+          <a class="primary-button" style="width:auto; min-height:48px; padding:0 18px; display:grid; place-items:center; text-decoration:none;" href="roulette.html">Öffnen</a>
+        </div>
+        <p class="hint">Roulette ist jetzt auf einer eigenen Seite, damit Rad und Wetttisch groß und gut sichtbar sind.</p>
+      </section>
+
       <section class="card leaderboard-card casino-panel">
         <div class="section-head">
           <h2>Live-Rangliste</h2>
@@ -55,23 +65,8 @@
         </div>
         <ol id="leaderboard" class="leaderboard"></ol>
       </section>
-
-      <section class="card admin-card">
-        <details>
-          <summary>Admin / Setup</summary>
-          <p>
-            Für echte Punkte musst du zuerst den Google-Apps-Script-Code aus
-            <code>backend/Code.gs</code> einfügen und die Web-App-URL unten in
-            <code>app.js</code> eintragen.
-          </p>
-          <p>
-            Solange keine Backend-URL eingetragen ist, läuft die Website im Testmodus nur auf dem Gerät.
-          </p>
-        </details>
-      </section>
     </main>
 
-    <script src="app.js"></script>
-    <script src="roulette-wheel-fix.js"></script>
+    <script src="slot-app.js"></script>
   </body>
 </html>
