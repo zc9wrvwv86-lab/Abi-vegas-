@@ -15,6 +15,7 @@ const refreshButton = document.querySelector("#refreshButton");
 const leaderboard = document.querySelector("#leaderboard");
 const resultText = document.querySelector("#resultText");
 const cooldownText = document.querySelector("#cooldownText");
+const chipBurst = document.querySelector("#chipBurst");
 const reels = [
   document.querySelector("#reel1"),
   document.querySelector("#reel2"),
@@ -23,7 +24,8 @@ const reels = [
 
 const state = {
   scores: Object.fromEntries(CLASSES.map((klasse) => [klasse, 0])),
-  lastSpin: Number(localStorage.getItem("abiVegasLastSpin") || 0)
+  lastSpin: Number(localStorage.getItem("abiVegasLastSpin") || 0),
+  isSpinning: false
 };
 
 function formatClassName(klasse) {
@@ -57,6 +59,10 @@ function randomItem(items) {
   return items[Math.floor(Math.random() * items.length)];
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function calculatePoints(result) {
   const [a, b, c] = result;
 
@@ -68,10 +74,13 @@ function calculatePoints(result) {
 }
 
 async function spin() {
+  if (state.isSpinning) return;
+
   const now = Date.now();
   const remaining = COOLDOWN_MS - (now - state.lastSpin);
   if (remaining > 0) {
     resultText.textContent = `Noch ${Math.ceil(remaining / 1000)} Sekunden bis zum nächsten Dreh.`;
+    showResultPop();
     return;
   }
 
@@ -79,17 +88,20 @@ async function spin() {
   const result = [randomItem(SYMBOLS), randomItem(SYMBOLS), randomItem(SYMBOLS)];
   const points = calculatePoints(result);
 
-  reels.forEach((reel, index) => {
-    reel.textContent = result[index];
-  });
-
+  state.isSpinning = true;
   state.lastSpin = now;
   localStorage.setItem("abiVegasLastSpin", String(now));
   localStorage.setItem("abiVegasClass", klasse);
+  updateCooldown();
+
+  resultText.textContent = "Die Walzen drehen ...";
+  showResultPop();
+  await animateReels(result);
 
   resultText.textContent = `${formatClassName(klasse)} gewinnt ${points} Chips!`;
+  showResultPop();
+  createChipBurst(points);
   updateLocalScore(klasse, points);
-  updateCooldown();
 
   try {
     await addPoints(klasse, points, "slot");
@@ -97,7 +109,57 @@ async function spin() {
   } catch (error) {
     console.warn(error);
     resultText.textContent += " Die Punkte sind aktuell nur lokal gespeichert, weil das Backend nicht erreichbar ist.";
+  } finally {
+    state.isSpinning = false;
+    updateCooldown();
   }
+}
+
+async function animateReels(finalResult) {
+  reels.forEach((reel) => reel.classList.add("is-spinning"));
+
+  const rounds = 14;
+  for (let round = 0; round < rounds; round++) {
+    reels.forEach((reel) => {
+      reel.textContent = randomItem(SYMBOLS);
+    });
+    await sleep(65 + round * 8);
+  }
+
+  for (let index = 0; index < reels.length; index++) {
+    reels[index].textContent = finalResult[index];
+    reels[index].classList.remove("is-spinning");
+    await sleep(120);
+  }
+}
+
+function showResultPop() {
+  resultText.classList.remove("result-pop");
+  void resultText.offsetWidth;
+  resultText.classList.add("result-pop");
+}
+
+function createChipBurst(points) {
+  if (!chipBurst) return;
+
+  const count = Math.min(14, Math.max(5, Math.round(points / 5)));
+  chipBurst.innerHTML = "";
+
+  for (let i = 0; i < count; i++) {
+    const chip = document.createElement("span");
+    chip.className = "chip-particle";
+    chip.textContent = "$";
+    const angle = (Math.PI * 2 * i) / count;
+    const distance = 70 + Math.random() * 90;
+    chip.style.setProperty("--x", `${Math.cos(angle) * distance}px`);
+    chip.style.setProperty("--y", `${Math.sin(angle) * distance - 25}px`);
+    chip.style.animationDelay = `${Math.random() * 90}ms`;
+    chipBurst.appendChild(chip);
+  }
+
+  setTimeout(() => {
+    chipBurst.innerHTML = "";
+  }, 1200);
 }
 
 function updateLocalScore(klasse, points) {
@@ -107,7 +169,10 @@ function updateLocalScore(klasse, points) {
 
 function updateCooldown() {
   const remaining = COOLDOWN_MS - (Date.now() - state.lastSpin);
-  if (remaining > 0) {
+  if (state.isSpinning) {
+    spinButton.disabled = true;
+    cooldownText.textContent = "Slot läuft ...";
+  } else if (remaining > 0) {
     spinButton.disabled = true;
     cooldownText.textContent = `Nächster Dreh in ${Math.ceil(remaining / 1000)} Sekunden.`;
   } else {
@@ -120,7 +185,7 @@ function renderLeaderboard() {
   const sorted = Object.entries(state.scores).sort((a, b) => b[1] - a[1]);
   leaderboard.innerHTML = sorted
     .map(([klasse, chips], index) => `
-      <li>
+      <li style="animation-delay: ${index * 35}ms">
         <span class="rank-name">#${index + 1} ${formatClassName(klasse)}</span>
         <span class="chips">${chips} Chips</span>
       </li>
