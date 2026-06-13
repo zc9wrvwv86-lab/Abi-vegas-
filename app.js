@@ -1,6 +1,6 @@
 // Abi Vegas Web-App
-// Wichtig: Nach dem Deploy von Google Apps Script hier die Web-App-URL eintragen.
-const BACKEND_URL = ""; // Beispiel: "https://script.google.com/macros/s/AKfycb.../exec"
+// Google Apps Script Web-App-URL für zentrale Punkte im Google Sheet.
+const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwX03awlXSE0UpGNAPfqugNwVJLqO_kv6ETfIaHREPLwBcwylxGbcjv3xWIjL1RWWGmHw/exec";
 
 const CLASSES = [
   "5a", "5b", "5c",
@@ -91,7 +91,7 @@ async function spin() {
     await loadScores();
   } catch (error) {
     console.warn(error);
-    resultText.textContent += " Die Punkte sind aktuell nur lokal gespeichert, weil das Backend noch nicht verbunden ist.";
+    resultText.textContent += " Die Punkte sind aktuell nur lokal gespeichert, weil das Backend nicht erreichbar ist.";
   }
 }
 
