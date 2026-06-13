@@ -35,7 +35,11 @@ function init() {
   classSelect.innerHTML = CLASSES
     .map((klasse) => `<option value="${klasse}">${formatClassName(klasse)}</option>`)
     .join("");
-  classSelect.value = localStorage.getItem("abiVegasClass") || CLASSES[0];
+
+  const savedClass = localStorage.getItem("abiVegasClass");
+  classSelect.value = CLASSES.includes(savedClass) ? savedClass : CLASSES[0];
+  localStorage.setItem("abiVegasClass", classSelect.value);
+
   classSelect.addEventListener("change", () => {
     localStorage.setItem("abiVegasClass", classSelect.value);
   });
@@ -186,7 +190,10 @@ async function loadScores() {
   if (data.ok && data.scores) {
     state.scores = Object.fromEntries(CLASSES.map((klasse) => [klasse, 0]));
     for (const item of data.scores) {
-      state.scores[String(item.klasse)] = Number(item.chips || 0);
+      const klasse = String(item.klasse);
+      if (CLASSES.includes(klasse)) {
+        state.scores[klasse] = Number(item.chips || 0);
+      }
     }
     renderLeaderboard();
   }
