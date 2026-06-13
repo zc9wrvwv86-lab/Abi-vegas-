@@ -2,15 +2,9 @@
 // Google Apps Script Web-App-URL für zentrale Punkte im Google Sheet.
 const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwX03awlXSE0UpGNAPfqugNwVJLqO_kv6ETfIaHREPLwBcwylxGbcjv3xWIjL1RWWGmHw/exec";
 
-const CLASSES = [
-  "5a", "5b", "5c",
-  "6a", "6b", "6c",
-  "7a", "7b", "7c",
-  "8a", "8b", "8c",
-  "9a", "9b", "9c",
-  "10a", "10b", "10c",
-  "Q1", "Q2", "Lehrer"
-];
+// Gespeichert wird im Google Sheet als: 5, 6, 7, ..., 12, Lehrer
+// Angezeigt wird schöner als: 5. Klasse, 6. Klasse, ..., Lehrer
+const CLASSES = ["5", "6", "7", "8", "9", "10", "11", "12", "Lehrer"];
 
 const SYMBOLS = ["🎰", "🎲", "🃏", "💎", "🍒", "7️⃣"];
 const COOLDOWN_MS = 30_000;
@@ -32,8 +26,15 @@ const state = {
   lastSpin: Number(localStorage.getItem("abiVegasLastSpin") || 0)
 };
 
+function formatClassName(klasse) {
+  if (klasse === "Lehrer") return "Lehrer";
+  return `${klasse}. Klasse`;
+}
+
 function init() {
-  classSelect.innerHTML = CLASSES.map((klasse) => `<option value="${klasse}">${klasse}</option>`).join("");
+  classSelect.innerHTML = CLASSES
+    .map((klasse) => `<option value="${klasse}">${formatClassName(klasse)}</option>`)
+    .join("");
   classSelect.value = localStorage.getItem("abiVegasClass") || CLASSES[0];
   classSelect.addEventListener("change", () => {
     localStorage.setItem("abiVegasClass", classSelect.value);
@@ -82,7 +83,7 @@ async function spin() {
   localStorage.setItem("abiVegasLastSpin", String(now));
   localStorage.setItem("abiVegasClass", klasse);
 
-  resultText.textContent = `${klasse} gewinnt ${points} Chips!`;
+  resultText.textContent = `${formatClassName(klasse)} gewinnt ${points} Chips!`;
   updateLocalScore(klasse, points);
   updateCooldown();
 
@@ -116,7 +117,7 @@ function renderLeaderboard() {
   leaderboard.innerHTML = sorted
     .map(([klasse, chips], index) => `
       <li>
-        <span class="rank-name">#${index + 1} ${klasse}</span>
+        <span class="rank-name">#${index + 1} ${formatClassName(klasse)}</span>
         <span class="chips">${chips} Chips</span>
       </li>
     `)
@@ -185,7 +186,7 @@ async function loadScores() {
   if (data.ok && data.scores) {
     state.scores = Object.fromEntries(CLASSES.map((klasse) => [klasse, 0]));
     for (const item of data.scores) {
-      state.scores[item.klasse] = Number(item.chips || 0);
+      state.scores[String(item.klasse)] = Number(item.chips || 0);
     }
     renderLeaderboard();
   }
