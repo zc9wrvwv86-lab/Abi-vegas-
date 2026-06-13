@@ -8,22 +8,34 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="vegas-bg" aria-hidden="true">
+      <span class="bg-icon bg-icon-1">🎲</span>
+      <span class="bg-icon bg-icon-2">♠</span>
+      <span class="bg-icon bg-icon-3">💎</span>
+      <span class="bg-icon bg-icon-4">🎰</span>
+      <span class="bg-icon bg-icon-5">♥</span>
+      <span class="bg-icon bg-icon-6">🃏</span>
+    </div>
+
     <main class="app">
-      <section class="hero card">
-        <p class="eyebrow">Abi Vegas</p>
+      <section class="hero card marquee-card">
+        <div class="brand-row">
+          <div class="school-badge" aria-label="ABW Logo Platzhalter">ABW</div>
+          <p class="eyebrow">Abi Vegas</p>
+        </div>
         <h1>Um jeden Punkt gepokert</h1>
         <p class="subtitle">
           Wähle deine Klasse, dreh den Slot und sammle Chips für die Rangliste.
         </p>
       </section>
 
-      <section class="card setup-card">
+      <section class="card setup-card casino-panel">
         <label for="classSelect">Deine Klasse</label>
         <select id="classSelect" aria-label="Klasse auswählen"></select>
         <p class="hint">Keine Namen nötig. Punkte zählen nur für die Klasse.</p>
       </section>
 
-      <section class="card game-card">
+      <section class="card game-card casino-panel">
         <div class="slot-machine" aria-live="polite">
           <div class="reel" id="reel1">🎰</div>
           <div class="reel" id="reel2">🎲</div>
@@ -32,9 +44,10 @@
         <button id="spinButton" class="primary-button">Drehen</button>
         <p id="resultText" class="result">Bereit für den ersten Dreh?</p>
         <p id="cooldownText" class="hint"></p>
+        <div id="chipBurst" class="chip-burst" aria-hidden="true"></div>
       </section>
 
-      <section class="card leaderboard-card">
+      <section class="card leaderboard-card casino-panel">
         <div class="section-head">
           <h2>Live-Rangliste</h2>
           <button id="refreshButton" class="ghost-button">Aktualisieren</button>
