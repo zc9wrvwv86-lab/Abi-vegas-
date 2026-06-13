@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Abi Vegas – um jeden Punkt gepokert</title>
+    <meta name="description" content="Abi Vegas Casino-Spiel für den Abi-Gag" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero card">
+        <p class="eyebrow">Abi Vegas</p>
+        <h1>Um jeden Punkt gepokert</h1>
+        <p class="subtitle">
+          Wähle deine Klasse, dreh den Slot und sammle Chips für die Rangliste.
+        </p>
+      </section>
+
+      <section class="card setup-card">
+        <label for="classSelect">Deine Klasse</label>
+        <select id="classSelect" aria-label="Klasse auswählen"></select>
+        <p class="hint">Keine Namen nötig. Punkte zählen nur für die Klasse.</p>
+      </section>
+
+      <section class="card game-card">
+        <div class="slot-machine" aria-live="polite">
+          <div class="reel" id="reel1">🎰</div>
+          <div class="reel" id="reel2">🎲</div>
+          <div class="reel" id="reel3">🃏</div>
+        </div>
+        <button id="spinButton" class="primary-button">Drehen</button>
+        <p id="resultText" class="result">Bereit für den ersten Dreh?</p>
+        <p id="cooldownText" class="hint"></p>
+      </section>
+
+      <section class="card leaderboard-card">
+        <div class="section-head">
+          <h2>Live-Rangliste</h2>
+          <button id="refreshButton" class="ghost-button">Aktualisieren</button>
+        </div>
+        <ol id="leaderboard" class="leaderboard"></ol>
+      </section>
+
+      <section class="card admin-card">
+        <details>
+          <summary>Admin / Setup</summary>
+          <p>
+            Für echte Punkte musst du zuerst den Google-Apps-Script-Code aus
+            <code>backend/Code.gs</code> einfügen und die Web-App-URL unten in
+            <code>app.js</code> eintragen.
+          </p>
+          <p>
+            Solange keine Backend-URL eingetragen ist, läuft die Website im Testmodus nur auf dem Gerät.
+          </p>
+        </details>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
