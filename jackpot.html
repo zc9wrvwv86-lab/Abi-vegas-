@@ -17,7 +17,7 @@
       <section class="hero-panel">
         <p class="eyebrow">Buehnen-Jackpot</p>
         <h1>Aufgabe ziehen, Chips vergeben</h1>
-        <p class="muted">Kurze Schätzfragen und Klassenaufgaben ohne Namen, ohne Bloßstellen und ohne Minuspunkte.</p>
+        <p class="muted">Kurze Schulfragen und Klassenaufgaben ohne Namen, ohne Bloßstellen und ohne Minuspunkte.</p>
       </section>
 
       <section class="panel">
@@ -51,16 +51,18 @@
       const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwX03awlXSE0UpGNAPfqugNwVJLqO_kv6ETfIaHREPLwBcwylxGbcjv3xWIjL1RWWGmHw/exec";
       const CLASSES = ["5", "6", "7", "8", "9", "10", "11", "12", "Lehrer"];
       const TASKS = [
-        { type: "Schätzfrage", text: "Wie viele Minuten Unterricht hat ein normaler 6-Stunden-Schultag? Wer am naechsten dran ist, gewinnt." },
-        { type: "Schnellrunde", text: "Nennt in 20 Sekunden so viele Schulfächer wie moeglich. Ab 8 richtigen Antworten gibt es den Jackpot." },
-        { type: "Motto-Frage", text: "Was bedeutet Fair Play bei einem Abi-Streich? Die beste kurze Antwort gewinnt." },
-        { type: "Kopfrechnen", text: "Die Klasse loest gemeinsam: 17 x 4 + 12. Eine Antwort, keine Hilfsmittel." },
-        { type: "Schätzfrage", text: "Wie viele Klassenstufen spielen heute bei Abi Vegas mit? Wer am naechsten dran ist, gewinnt." },
-        { type: "Teamruf", text: "Die Klasse hat 10 Sekunden fuer einen kurzen, fairen Teamruf. Applaus entscheidet." },
-        { type: "Wissensduell", text: "Nennt drei Hauptstaedte in Europa. Bei drei richtigen Antworten gibt es Chips." },
-        { type: "Abi Vegas", text: "Blackjack-Frage: Bei welcher Zahl sollte man im Spiel nicht drueber kommen?" },
-        { type: "Sicherheitsfrage", text: "Was ist wichtiger: Chaos oder ein Streich, bei dem alle sicher mitmachen koennen?" },
-        { type: "Schnellrunde", text: "Nennt in 20 Sekunden fuenf Dinge, die in ein Klassenzimmer gehoeren." }
+        { type: "Einfache Frage", text: "Wie viele Minuten hat eine Stunde?" },
+        { type: "Einfache Frage", text: "Was ist 8 + 7?" },
+        { type: "Einfache Frage", text: "Was heisst Schule auf Englisch?" },
+        { type: "Einfache Frage", text: "Welche Farbe entsteht aus Blau und Gelb?" },
+        { type: "Schätzfrage", text: "Wie viele Stufen spielen heute bei Abi Vegas mit? Wer am naechsten dran ist, gewinnt." },
+        { type: "Schnellrunde", text: "Nennt in 20 Sekunden fuenf Schulfächer." },
+        { type: "Schnellrunde", text: "Nennt in 20 Sekunden fuenf Dinge, die in ein Klassenzimmer gehoeren." },
+        { type: "Teamfrage", text: "Was ist wichtiger bei einem Abi-Streich: Chaos oder dass alle sicher mitmachen koennen?" },
+        { type: "Abi Vegas", text: "Bei welcher Zahl sollte man im Blackjack nicht drueber kommen?" },
+        { type: "Schulfrage", text: "Wie nennt man die Pause zwischen zwei Unterrichtsstunden?" },
+        { type: "Schulfrage", text: "Wie viele Bundeslaender hat Deutschland?" },
+        { type: "Motto-Frage", text: "Warum spielen wir mit Chips und nicht mit echtem Geld?" }
       ];
 
       const state = {
@@ -90,7 +92,7 @@
 
       function drawTask() {
         state.currentTask = TASKS[Math.floor(Math.random() * TASKS.length)];
-        taskBox.innerHTML = `<p class="chips">${state.currentTask.type}</p><h2>${state.currentTask.text}</h2><p class="muted">Moderation entscheidet vor Ort: 20 Chips fuer geschafft, 50 Chips fuer Jackpot.</p>`;
+        taskBox.innerHTML = `<p class="chips">${state.currentTask.type}</p><h2>${state.currentTask.text}</h2><p class="muted">Moderation entscheidet vor Ort: 20 Chips fuer richtig oder geschafft, 50 Chips fuer Jackpot.</p>`;
         statusText.textContent = "Aufgabe gezogen. Klasse spielen lassen und danach Chips vergeben.";
       }
 
