@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event-Zentrale - Abi Vegas</title>
+    <meta name="description" content="Abi Vegas Event-Zentrale mit Spielstart, Rangliste und Ablauf" />
+    <link rel="stylesheet" href="event-game.css" />
+    <link rel="stylesheet" href="event-center.css" />
+  </head>
+  <body>
+    <main class="event-page">
+      <nav class="topbar">
+        <a href="index.html">Zurueck</a>
+        <strong>ABV · Event-Zentrale</strong>
+      </nav>
+
+      <section class="hero-panel hub-hero">
+        <div>
+          <p class="eyebrow">Abi Vegas Live</p>
+          <h1>Alles fuer die Stunde</h1>
+          <p class="muted">Startet Spiele, beobachtet die Rangliste und haltet den Ablauf ruhig und fair.</p>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-box">Slot<span>klein</span></div>
+          <div class="stat-box">Blackjack<span>mittel</span></div>
+          <div class="stat-box">Risiko<span>hoch</span></div>
+          <div class="stat-box">Jackpot<span>live</span></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Spiel starten</h2>
+        <div class="hub-actions">
+          <a class="hub-link" href="index.html#slotGame"><strong>Slot Machine</strong><span>Kurzer Warm-up-Dreh fuer einzelne Klassen.</span></a>
+          <a class="hub-link" href="roulette.html"><strong>Abi Roulette</strong><span>Setzen, drehen, Frage beantworten.</span></a>
+          <a class="hub-link" href="blackjack.html"><strong>Blackjack 21</strong><span>Klasse gegen Dealer mit echten Spielkarten.</span></a>
+          <a class="hub-link" href="challenge.html"><strong>Risiko-Leiter</strong><span>Chips sichern oder weiter riskieren.</span></a>
+          <a class="hub-link" href="jackpot.html"><strong>Buehnen-Jackpot</strong><span>Moderierte Aufgaben und einfache Fragen.</span></a>
+          <a class="hub-link" href="#leaderboardPanel"><strong>Rangliste</strong><span>Live-Stand aktualisieren und zeigen.</span></a>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Empfohlener Ablauf</h2>
+        <div class="run-grid">
+          <div class="run-step"><strong>1. Warm-up</strong><p>Slot Machine fuer schnelle erste Chips.</p></div>
+          <div class="run-step"><strong>2. Casino</strong><p>Roulette fuer sichtbare Spannung.</p></div>
+          <div class="run-step"><strong>3. Duell</strong><p>Blackjack fuer kurze Klassenrunden.</p></div>
+          <div class="run-step"><strong>4. Finale</strong><p>Risiko-Leiter fuer hohe Gewinne.</p></div>
+          <div class="run-step"><strong>5. Live</strong><p>Buehnen-Jackpot, wenn ihr moderieren wollt.</p></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Punkte-Balance</h2>
+        <div class="balance-grid">
+          <div class="balance-item"><strong>Slot</strong><p>3 bis 30 Chips, damit kurze Drehs nicht alles entscheiden.</p></div>
+          <div class="balance-item"><strong>Blackjack</strong><p>10, 30 oder 60 Chips nach Frage.</p></div>
+          <div class="balance-item"><strong>Roulette</strong><p>Bis 200 Chips, aber nur nach Treffer und Frage.</p></div>
+          <div class="balance-item"><strong>Risiko</strong><p>10, 25, 50 oder 100 Chips.</p></div>
+          <div class="balance-item"><strong>Jackpot</strong><p>20 oder 50 Chips nach Moderationsentscheid.</p></div>
+        </div>
+      </section>
+
+      <section id="leaderboardPanel" class="panel">
+        <div class="topbar">
+          <h2>Live-Rangliste</h2>
+          <button id="refreshButton" class="secondary">Aktualisieren</button>
+        </div>
+        <ol id="leaderboard" class="leaderboard"></ol>
+      </section>
+
+      <section class="panel deploy-note">
+        <h2>Vor dem Einsatz</h2>
+        <p class="muted">Das Repository erlaubt Gewinne bis 200 Chips. Falls die Live-Rangliste trotzdem nur 50 speichert, muss der Code aus <strong>backend/Code.gs</strong> im Google Apps Script ersetzt und neu bereitgestellt werden.</p>
+      </section>
+    </main>
+
+    <script>
+      const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwX03awlXSE0UpGNAPfqugNwVJLqO_kv6ETfIaHREPLwBcwylxGbcjv3xWIjL1RWWGmHw/exec";
+      const CLASSES = ["5", "6", "7", "8", "9", "10", "11", "12", "Lehrer"];
+      const leaderboard = document.querySelector("#leaderboard");
+      document.querySelector("#refreshButton").addEventListener("click", loadScores);
+
+      function formatClassName(k) { return k === "Lehrer" ? "Lehrer" : `${k}. Klasse`; }
+      function jsonp(action, params = {}) {
+        return new Promise((resolve, reject) => {
+          const callbackName = `abiVegasCallback_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+          const url = new URL(BACKEND_URL);
+          url.searchParams.set("action", action);
+          url.searchParams.set("callback", callbackName);
+          Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+          const script = document.createElement("script");
+          const timeout = setTimeout(() => { cleanup(); reject(new Error("Backend antwortet nicht.")); }, 10000);
+          function cleanup() { clearTimeout(timeout); delete window[callbackName]; script.remove(); }
+          window[callbackName] = data => { cleanup(); resolve(data); };
+          script.onerror = () => { cleanup(); reject(new Error("Backend konnte nicht geladen werden.")); };
+          script.src = url.toString();
+          document.body.appendChild(script);
+        });
+      }
+      async function loadScores() {
+        try {
+          const data = await jsonp("scores");
+          const scores = Object.fromEntries(CLASSES.map(k => [k, 0]));
+          if (data.ok && data.scores) {
+            data.scores.forEach(item => {
+              const klasse = String(item.klasse);
+              if (CLASSES.includes(klasse)) scores[klasse] = Number(item.chips || 0);
+            });
+          }
+          leaderboard.innerHTML = Object.entries(scores).sort((a, b) => b[1] - a[1]).map(([klasse, chips], index) => `<li><span>#${index + 1} ${formatClassName(klasse)}</span><span class="chips">${chips} Chips</span></li>`).join("");
+        } catch (error) {
+          console.warn(error);
+          leaderboard.innerHTML = `<li><span>Rangliste nicht erreichbar</span><span class="chips">offline</span></li>`;
+        }
+      }
+
+      loadScores();
+    </script>
+  </body>
+</html>
