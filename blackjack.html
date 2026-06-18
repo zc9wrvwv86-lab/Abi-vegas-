@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blackjack 21 - Abi Vegas</title>
+    <meta name="description" content="Abi Vegas Blackjack-Spiel mit Klassenpunkten" />
+    <link rel="stylesheet" href="event-game.css" />
+  </head>
+  <body>
+    <main class="event-page">
+      <nav class="topbar">
+        <a href="index.html">Zurueck</a>
+        <strong>ABV · Abi Vegas</strong>
+      </nav>
+
+      <section class="hero-panel">
+        <p class="eyebrow">Blackjack 21</p>
+        <h1>Klasse gegen Dealer</h1>
+        <p class="muted">Gewinn die Runde, beantworte die Frage und sichere Chips fuer deine Klasse.</p>
+      </section>
+
+      <section class="panel">
+        <label for="classSelect">Deine Klasse</label>
+        <select id="classSelect"></select>
+      </section>
+
+      <section class="game-layout">
+        <section class="panel">
+          <h2>Deine Hand <span id="playerValue" class="chips"></span></h2>
+          <div id="playerCards" class="card-row"></div>
+
+          <h2>Dealer <span id="dealerValue" class="chips"></span></h2>
+          <div id="dealerCards" class="card-row"></div>
+
+          <div class="actions">
+            <button id="hitButton">Karte ziehen</button>
+            <button id="standButton" class="secondary">Stehen</button>
+            <button id="newRoundButton" class="secondary">Neue Runde</button>
+          </div>
+          <p id="roundResult" class="result-text">Starte eine Runde und versuche, naeher an 21 zu landen.</p>
+        </section>
+
+        <aside class="panel">
+          <h2>Punkte</h2>
+          <div class="stat-grid">
+            <div class="stat-box">Blackjack<span>60</span></div>
+            <div class="stat-box">Sieg<span>30</span></div>
+            <div class="stat-box">Remis<span>10</span></div>
+            <div class="stat-box">Bust<span>0</span></div>
+          </div>
+          <div id="questionPanel" class="question-card">
+            <p class="muted">Nach einem Gewinn erscheint hier die Frage.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="panel">
+        <div class="topbar">
+          <h2>Live-Rangliste</h2>
+          <button id="refreshButton" class="secondary">Aktualisieren</button>
+        </div>
+        <ol id="leaderboard" class="leaderboard"></ol>
+      </section>
+    </main>
+
+    <script>
+      const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwX03awlXSE0UpGNAPfqugNwVJLqO_kv6ETfIaHREPLwBcwylxGbcjv3xWIjL1RWWGmHw/exec";
+      const CLASSES = ["5", "6", "7", "8", "9", "10", "11", "12", "Lehrer"];
+      const SUITS = ["S", "H", "D", "C"];
+      const QUESTIONS = {
+        easy: [
+          q("Was ist 6 + 7?", ["11", "12", "13", "14"], 2),
+          q("Welche Zahl kommt direkt nach 19?", ["18", "20", "21", "22"], 1),
+          q("Was heisst 'Gluck' auf Englisch?", ["luck", "look", "lock", "lake"], 0)
+        ],
+        medium: [
+          q("Was ist 25 Prozent von 80?", ["15", "20", "25", "30"], 1),
+          q("Welche Wortart beschreibt Eigenschaften?", ["Nomen", "Verb", "Adjektiv", "Artikel"], 2),
+          q("In welchem Jahr fiel die Berliner Mauer?", ["1961", "1989", "1999", "1945"], 1)
+        ],
+        hard: [
+          q("Was ist die Ableitung von x hoch 2?", ["x", "2x", "x hoch 3", "2"], 1),
+          q("Was bedeutet 'however'?", ["deshalb", "jedoch", "ausserdem", "niemals"], 1),
+          q("Was ist sin(90 Grad)?", ["0", "0,5", "1", "2"], 2)
+        ],
+        teacher: [
+          q("Was macht ein gutes Schulspiel aus?", ["kurz, fair und verstaendlich", "moeglichst kompliziert", "unfair", "nur fuer Profis"], 0),
+          q("Was ist beim Abi-Gag wichtiger als Gewinnen?", ["Fairness", "Lautstaerke", "Stress", "Chaos"], 0)
+        ]
+      };
+
+      const state = {
+        deck: [],
+        player: [],
+        dealer: [],
+        roundOver: false,
+        pending: null,
+        scores: Object.fromEntries(CLASSES.map(k => [k, 0]))
+      };
+
+      const classSelect = document.querySelector("#classSelect");
+      const playerCards = document.querySelector("#playerCards");
+      const dealerCards = document.querySelector("#dealerCards");
+      const playerValue = document.querySelector("#playerValue");
+      const dealerValue = document.querySelector("#dealerValue");
+      const hitButton = document.querySelector("#hitButton");
+      const standButton = document.querySelector("#standButton");
+      const newRoundButton = document.querySelector("#newRoundButton");
+      const roundResult = document.querySelector("#roundResult");
+      const questionPanel = document.querySelector("#questionPanel");
+      const leaderboard = document.querySelector("#leaderboard");
+
+      function q(text, choices, correctIndex) { return { text, choices, correctIndex }; }
+      function formatClassName(k) { return k === "Lehrer" ? "Lehrer" : `${k}. Klasse`; }
+
+      function init() {
+        classSelect.innerHTML = CLASSES.map(k => `<option value="${k}">${formatClassName(k)}</option>`).join("");
+        const savedClass = localStorage.getItem("abiVegasClass");
+        classSelect.value = CLASSES.includes(savedClass) ? savedClass : "5";
+        classSelect.addEventListener("change", () => localStorage.setItem("abiVegasClass", classSelect.value));
+        hitButton.addEventListener("click", hit);
+        standButton.addEventListener("click", stand);
+        newRoundButton.addEventListener("click", newRound);
+        document.querySelector("#refreshButton").addEventListener("click", loadScores);
+        newRound();
+        loadScores();
+      }
+
+      function buildDeck() {
+        const ranks = [
+          { label: "A", value: 11 }, { label: "2", value: 2 }, { label: "3", value: 3 }, { label: "4", value: 4 },
+          { label: "5", value: 5 }, { label: "6", value: 6 }, { label: "7", value: 7 }, { label: "8", value: 8 },
+          { label: "9", value: 9 }, { label: "10", value: 10 }, { label: "J", value: 10 }, { label: "Q", value: 10 }, { label: "K", value: 10 }
+        ];
+        return SUITS.flatMap(suit => ranks.map(rank => ({ ...rank, suit, red: suit === "H" || suit === "D" })));
+      }
+
+      function shuffle(cards) {
+        const deck = [...cards];
+        for (let i = deck.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+        return deck;
+      }
+
+      function draw() { return state.deck.pop(); }
+
+      function handValue(cards) {
+        let total = cards.reduce((sum, card) => sum + card.value, 0);
+        let aces = cards.filter(card => card.label === "A").length;
+        while (total > 21 && aces > 0) { total -= 10; aces--; }
+        return total;
+      }
+
+      function newRound() {
+        state.deck = shuffle(buildDeck());
+        state.player = [draw(), draw()];
+        state.dealer = [draw(), draw()];
+        state.roundOver = false;
+        state.pending = null;
+        questionPanel.innerHTML = `<p class="muted">Nach einem Gewinn erscheint hier die Frage.</p>`;
+        roundResult.textContent = "Zieh eine Karte oder bleib stehen.";
+        renderHands(false);
+        updateButtons();
+
+        const playerScore = handValue(state.player);
+        const dealerScore = handValue(state.dealer);
+        if (playerScore === 21 || dealerScore === 21) {
+          if (playerScore === dealerScore) finishRound("push");
+          else if (playerScore === 21) finishRound("blackjack");
+          else finishRound("dealer");
+        }
+      }
+
+      function renderCards(target, cards, hideSecond) {
+        target.innerHTML = cards.map((card, index) => {
+          if (hideSecond && index === 1) return `<span class="playing-card hidden">?</span>`;
+          return `<span class="playing-card ${card.red ? "red" : ""}">${card.label}${card.suit}</span>`;
+        }).join("");
+      }
+
+      function renderHands(revealDealer) {
+        renderCards(playerCards, state.player, false);
+        renderCards(dealerCards, state.dealer, !revealDealer && !state.roundOver);
+        playerValue.textContent = handValue(state.player);
+        dealerValue.textContent = revealDealer || state.roundOver ? handValue(state.dealer) : "?";
+      }
+
+      function updateButtons() {
+        hitButton.disabled = state.roundOver || Boolean(state.pending);
+        standButton.disabled = state.roundOver || Boolean(state.pending);
+      }
+
+      function hit() {
+        if (state.roundOver || state.pending) return;
+        state.player.push(draw());
+        renderHands(false);
+        if (handValue(state.player) > 21) finishRound("bust");
+      }
+
+      function stand() {
+        if (state.roundOver || state.pending) return;
+        while (handValue(state.dealer) < 17) state.dealer.push(draw());
+        const playerScore = handValue(state.player);
+        const dealerScore = handValue(state.dealer);
+        if (dealerScore > 21 || playerScore > dealerScore) finishRound("win");
+        else if (playerScore === dealerScore) finishRound("push");
+        else finishRound("dealer");
+      }
+
+      function finishRound(result) {
+        state.roundOver = true;
+        renderHands(true);
+        updateButtons();
+        const prize = result === "blackjack" ? 60 : result === "win" ? 30 : result === "push" ? 10 : 0;
+        const messages = {
+          blackjack: "Blackjack! Frage richtig = 60 Chips.",
+          win: "Gewonnen! Frage richtig = 30 Chips.",
+          push: "Unentschieden. Frage richtig = 10 Chips.",
+          bust: "Ueber 21. Diese Runde gibt keine Chips.",
+          dealer: "Dealer gewinnt. Diese Runde gibt keine Chips."
+        };
+        roundResult.textContent = messages[result];
+        if (prize > 0) showQuestion(prize);
+      }
+
+      function difficulty() {
+        const k = classSelect.value;
+        if (k === "Lehrer") return "teacher";
+        const grade = Number(k);
+        if (grade <= 6) return "easy";
+        if (grade <= 9) return "medium";
+        return "hard";
+      }
+
+      function showQuestion(points) {
+        const pool = QUESTIONS[difficulty()];
+        const question = pool[Math.floor(Math.random() * pool.length)];
+        state.pending = { question, points };
+        questionPanel.innerHTML = `<div><p class="chips">Gewinnchance: ${points} Chips</p><h3>${question.text}</h3><div class="answer-grid">${question.choices.map((choice, index) => `<button class="secondary" data-answer="${index}">${choice}</button>`).join("")}</div></div>`;
+        questionPanel.querySelectorAll("[data-answer]").forEach(button => button.addEventListener("click", () => answerQuestion(Number(button.dataset.answer))));
+      }
+
+      async function answerQuestion(index) {
+        if (!state.pending) return;
+        const { question, points } = state.pending;
+        const correct = index === question.correctIndex;
+        questionPanel.querySelectorAll("button").forEach(button => button.disabled = true);
+        state.pending = null;
+        if (!correct) {
+          roundResult.textContent = `Leider falsch. Richtig waere: ${question.choices[question.correctIndex]}.`;
+          return;
+        }
+        const klasse = classSelect.value;
+        roundResult.textContent = `${formatClassName(klasse)} gewinnt ${points} Chips beim Blackjack!`;
+        updateLocalScore(klasse, points);
+        try { await addPoints(klasse, points, "blackjack"); await loadScores(); } catch (error) { console.warn(error); }
+      }
+
+      function updateLocalScore(klasse, points) { state.scores[klasse] = (state.scores[klasse] || 0) + points; renderLeaderboard(); }
+      function jsonp(action, params = {}) {
+        return new Promise((resolve, reject) => {
+          const callbackName = `abiVegasCallback_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+          const url = new URL(BACKEND_URL);
+          url.searchParams.set("action", action); url.searchParams.set("callback", callbackName);
+          Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+          const script = document.createElement("script");
+          const timeout = setTimeout(() => { cleanup(); reject(new Error("Backend antwortet nicht.")); }, 10000);
+          function cleanup() { clearTimeout(timeout); delete window[callbackName]; script.remove(); }
+          window[callbackName] = data => { cleanup(); resolve(data); };
+          script.onerror = () => { cleanup(); reject(new Error("Backend konnte nicht geladen werden.")); };
+          script.src = url.toString(); document.body.appendChild(script);
+        });
+      }
+      function addPoints(klasse, points, game) { return jsonp("add", { klasse, points, game, code: localStorage.getItem("abiVegasPlayerCode") || createPlayerCode() }); }
+      async function loadScores() {
+        try {
+          const data = await jsonp("scores");
+          if (data.ok && data.scores) {
+            state.scores = Object.fromEntries(CLASSES.map(k => [k, 0]));
+            data.scores.forEach(item => { if (CLASSES.includes(String(item.klasse))) state.scores[String(item.klasse)] = Number(item.chips || 0); });
+          }
+        } catch (error) { console.warn(error); }
+        renderLeaderboard();
+      }
+      function renderLeaderboard() { leaderboard.innerHTML = Object.entries(state.scores).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>`<li><span>#${i+1} ${formatClassName(k)}</span><span class="chips">${v} Chips</span></li>`).join(""); }
+      function createPlayerCode() { const code = `player-${Math.random().toString(36).slice(2,10)}`; localStorage.setItem("abiVegasPlayerCode", code); return code; }
+
+      init();
+    </script>
+  </body>
+</html>
