@@ -46,11 +46,11 @@ function sleep(ms) {
 
 function calculatePoints(result) {
   const [a, b, c] = result;
-  if (a === b && b === c) return 50;
-  if (a === b || b === c || a === c) return 20;
-  if (result.includes("💎")) return 10;
-  if (result.includes("7️⃣")) return 15;
-  return 5;
+  if (a === b && b === c) return 30;
+  if (a === b || b === c || a === c) return 12;
+  if (result.includes("7️⃣")) return 10;
+  if (result.includes("💎")) return 8;
+  return 3;
 }
 
 async function spin() {
