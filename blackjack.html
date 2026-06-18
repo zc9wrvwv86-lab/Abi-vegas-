@@ -67,7 +67,12 @@
     <script>
       const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwX03awlXSE0UpGNAPfqugNwVJLqO_kv6ETfIaHREPLwBcwylxGbcjv3xWIjL1RWWGmHw/exec";
       const CLASSES = ["5", "6", "7", "8", "9", "10", "11", "12", "Lehrer"];
-      const SUITS = ["S", "H", "D", "C"];
+      const SUITS = [
+        { symbol: "♠", name: "Pik", red: false },
+        { symbol: "♥", name: "Herz", red: true },
+        { symbol: "♦", name: "Karo", red: true },
+        { symbol: "♣", name: "Kreuz", red: false }
+      ];
       const QUESTIONS = {
         easy: [
           q("Wie viele Minuten hat eine Schulstunde meistens?", ["30", "45", "60", "90"], 1),
@@ -137,7 +142,7 @@
           { label: "5", value: 5 }, { label: "6", value: 6 }, { label: "7", value: 7 }, { label: "8", value: 8 },
           { label: "9", value: 9 }, { label: "10", value: 10 }, { label: "J", value: 10 }, { label: "Q", value: 10 }, { label: "K", value: 10 }
         ];
-        return SUITS.flatMap(suit => ranks.map(rank => ({ ...rank, suit, red: suit === "H" || suit === "D" })));
+        return SUITS.flatMap(suit => ranks.map(rank => ({ ...rank, suit: suit.symbol, suitName: suit.name, red: suit.red })));
       }
 
       function shuffle(cards) {
@@ -180,8 +185,14 @@
 
       function renderCards(target, cards, hideSecond) {
         target.innerHTML = cards.map((card, index) => {
-          if (hideSecond && index === 1) return `<span class="playing-card hidden">?</span>`;
-          return `<span class="playing-card ${card.red ? "red" : ""}">${card.label}${card.suit}</span>`;
+          if (hideSecond && index === 1) return `<span class="playing-card hidden" aria-label="Verdeckte Karte"></span>`;
+          return `
+            <span class="playing-card ${card.red ? "red" : ""}" aria-label="${card.label} ${card.suitName}">
+              <span class="card-corner">${card.label}<small>${card.suit}</small></span>
+              <span class="card-suit">${card.suit}</span>
+              <span class="card-corner bottom">${card.label}<small>${card.suit}</small></span>
+            </span>
+          `;
         }).join("");
       }
 
