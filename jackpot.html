@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Buehnen-Jackpot - Abi Vegas</title>
+    <meta name="description" content="Abi Vegas Buehnen-Jackpot fuer harmlose Klassenchallenges" />
+    <link rel="stylesheet" href="event-game.css" />
+  </head>
+  <body>
+    <main class="event-page">
+      <nav class="topbar">
+        <a href="index.html">Zurueck</a>
+        <strong>ABV · Abi Vegas</strong>
+      </nav>
+
+      <section class="hero-panel">
+        <p class="eyebrow">Buehnen-Jackpot</p>
+        <h1>Aufgabe ziehen, Chips vergeben</h1>
+        <p class="muted">Kurze Schätzfragen und Klassenaufgaben ohne Namen, ohne Bloßstellen und ohne Minuspunkte.</p>
+      </section>
+
+      <section class="panel">
+        <label for="classSelect">Deine Klasse</label>
+        <select id="classSelect"></select>
+      </section>
+
+      <section class="game-layout">
+        <section class="panel">
+          <h2>Gezogene Aufgabe</h2>
+          <div id="taskBox" class="challenge-card">
+            <p class="muted">Zieh eine Aufgabe fuer die naechste Klasse.</p>
+          </div>
+          <div class="actions">
+            <button id="drawButton">Neue Aufgabe</button>
+            <button id="smallWinButton" class="secondary">+20 Chips</button>
+            <button id="bigWinButton">+50 Jackpot</button>
+          </div>
+          <p id="statusText" class="result-text">Bereit fuer den naechsten Buehnenmoment.</p>
+        </section>
+
+        <aside class="panel">
+          <h2>Live-Rangliste</h2>
+          <button id="refreshButton" class="secondary">Aktualisieren</button>
+          <ol id="leaderboard" class="leaderboard"></ol>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwX03awlXSE0UpGNAPfqugNwVJLqO_kv6ETfIaHREPLwBcwylxGbcjv3xWIjL1RWWGmHw/exec";
+      const CLASSES = ["5", "6", "7", "8", "9", "10", "11", "12", "Lehrer"];
+      const TASKS = [
+        { type: "Schätzfrage", text: "Wie viele Minuten Unterricht hat ein normaler 6-Stunden-Schultag? Wer am naechsten dran ist, gewinnt." },
+        { type: "Schnellrunde", text: "Nennt in 20 Sekunden so viele Schulfächer wie moeglich. Ab 8 richtigen Antworten gibt es den Jackpot." },
+        { type: "Motto-Frage", text: "Was bedeutet Fair Play bei einem Abi-Streich? Die beste kurze Antwort gewinnt." },
+        { type: "Kopfrechnen", text: "Die Klasse loest gemeinsam: 17 x 4 + 12. Eine Antwort, keine Hilfsmittel." },
+        { type: "Schätzfrage", text: "Wie viele Klassenstufen spielen heute bei Abi Vegas mit? Wer am naechsten dran ist, gewinnt." },
+        { type: "Teamruf", text: "Die Klasse hat 10 Sekunden fuer einen kurzen, fairen Teamruf. Applaus entscheidet." },
+        { type: "Wissensduell", text: "Nennt drei Hauptstaedte in Europa. Bei drei richtigen Antworten gibt es Chips." },
+        { type: "Abi Vegas", text: "Blackjack-Frage: Bei welcher Zahl sollte man im Spiel nicht drueber kommen?" },
+        { type: "Sicherheitsfrage", text: "Was ist wichtiger: Chaos oder ein Streich, bei dem alle sicher mitmachen koennen?" },
+        { type: "Schnellrunde", text: "Nennt in 20 Sekunden fuenf Dinge, die in ein Klassenzimmer gehoeren." }
+      ];
+
+      const state = {
+        currentTask: null,
+        scores: Object.fromEntries(CLASSES.map(k => [k, 0]))
+      };
+
+      const classSelect = document.querySelector("#classSelect");
+      const taskBox = document.querySelector("#taskBox");
+      const statusText = document.querySelector("#statusText");
+      const leaderboard = document.querySelector("#leaderboard");
+
+      function formatClassName(k) { return k === "Lehrer" ? "Lehrer" : `${k}. Klasse`; }
+
+      function init() {
+        classSelect.innerHTML = CLASSES.map(k => `<option value="${k}">${formatClassName(k)}</option>`).join("");
+        const savedClass = localStorage.getItem("abiVegasClass");
+        classSelect.value = CLASSES.includes(savedClass) ? savedClass : "5";
+        classSelect.addEventListener("change", () => localStorage.setItem("abiVegasClass", classSelect.value));
+        document.querySelector("#drawButton").addEventListener("click", drawTask);
+        document.querySelector("#smallWinButton").addEventListener("click", () => award(20));
+        document.querySelector("#bigWinButton").addEventListener("click", () => award(50));
+        document.querySelector("#refreshButton").addEventListener("click", loadScores);
+        drawTask();
+        loadScores();
+      }
+
+      function drawTask() {
+        state.currentTask = TASKS[Math.floor(Math.random() * TASKS.length)];
+        taskBox.innerHTML = `<p class="chips">${state.currentTask.type}</p><h2>${state.currentTask.text}</h2><p class="muted">Moderation entscheidet vor Ort: 20 Chips fuer geschafft, 50 Chips fuer Jackpot.</p>`;
+        statusText.textContent = "Aufgabe gezogen. Klasse spielen lassen und danach Chips vergeben.";
+      }
+
+      async function award(points) {
+        const klasse = classSelect.value;
+        statusText.textContent = `${formatClassName(klasse)} bekommt ${points} Chips aus dem Buehnen-Jackpot.`;
+        updateLocalScore(klasse, points);
+        try { await addPoints(klasse, points, "jackpot"); await loadScores(); } catch (error) { console.warn(error); }
+      }
+
+      function updateLocalScore(klasse, points) { state.scores[klasse] = (state.scores[klasse] || 0) + points; renderLeaderboard(); }
+      function jsonp(action, params = {}) {
+        return new Promise((resolve, reject) => {
+          const callbackName = `abiVegasCallback_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+          const url = new URL(BACKEND_URL);
+          url.searchParams.set("action", action); url.searchParams.set("callback", callbackName);
+          Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+          const script = document.createElement("script");
+          const timeout = setTimeout(() => { cleanup(); reject(new Error("Backend antwortet nicht.")); }, 10000);
+          function cleanup() { clearTimeout(timeout); delete window[callbackName]; script.remove(); }
+          window[callbackName] = data => { cleanup(); resolve(data); };
+          script.onerror = () => { cleanup(); reject(new Error("Backend konnte nicht geladen werden.")); };
+          script.src = url.toString(); document.body.appendChild(script);
+        });
+      }
+      function addPoints(klasse, points, game) { return jsonp("add", { klasse, points, game, code: localStorage.getItem("abiVegasPlayerCode") || createPlayerCode() }); }
+      async function loadScores() {
+        try {
+          const data = await jsonp("scores");
+          if (data.ok && data.scores) {
+            state.scores = Object.fromEntries(CLASSES.map(k => [k, 0]));
+            data.scores.forEach(item => { if (CLASSES.includes(String(item.klasse))) state.scores[String(item.klasse)] = Number(item.chips || 0); });
+          }
+        } catch (error) { console.warn(error); }
+        renderLeaderboard();
+      }
+      function renderLeaderboard() { leaderboard.innerHTML = Object.entries(state.scores).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>`<li><span>#${i+1} ${formatClassName(k)}</span><span class="chips">${v} Chips</span></li>`).join(""); }
+      function createPlayerCode() { const code = `player-${Math.random().toString(36).slice(2,10)}`; localStorage.setItem("abiVegasPlayerCode", code); return code; }
+
+      init();
+    </script>
+  </body>
+</html>
