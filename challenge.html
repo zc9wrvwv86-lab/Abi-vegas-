@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Risiko-Leiter - Abi Vegas</title>
+    <meta name="description" content="Abi Vegas Risiko-Leiter mit Klassenpunkten" />
+    <link rel="stylesheet" href="event-game.css" />
+  </head>
+  <body>
+    <main class="event-page">
+      <nav class="topbar">
+        <a href="index.html">Zurueck</a>
+        <strong>ABV · Abi Vegas</strong>
+      </nav>
+
+      <section class="hero-panel">
+        <p class="eyebrow">Risiko-Leiter</p>
+        <h1>Sichern oder zocken?</h1>
+        <p class="muted">Beantworte Fragen fuer 10, 25, 50 und 100 Chips. Nach jeder richtigen Antwort entscheidet die Klasse.</p>
+      </section>
+
+      <section class="panel">
+        <label for="classSelect">Deine Klasse</label>
+        <select id="classSelect"></select>
+      </section>
+
+      <section class="game-layout">
+        <section class="panel">
+          <h2>Aktuelle Runde</h2>
+          <div class="stat-grid">
+            <div class="stat-box">Stufe 1<span>10</span></div>
+            <div class="stat-box">Stufe 2<span>25</span></div>
+            <div class="stat-box">Stufe 3<span>50</span></div>
+            <div class="stat-box">Finale<span>100</span></div>
+          </div>
+          <div id="questionPanel" class="question-card"></div>
+          <div class="actions">
+            <button id="bankButton" class="secondary">Banken</button>
+            <button id="continueButton">Weiter riskieren</button>
+            <button id="newRoundButton" class="secondary">Neue Runde</button>
+          </div>
+          <p id="statusText" class="result-text">Starte eine neue Runde.</p>
+        </section>
+
+        <aside class="panel">
+          <h2>Live-Rangliste</h2>
+          <button id="refreshButton" class="secondary">Aktualisieren</button>
+          <ol id="leaderboard" class="leaderboard"></ol>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwX03awlXSE0UpGNAPfqugNwVJLqO_kv6ETfIaHREPLwBcwylxGbcjv3xWIjL1RWWGmHw/exec";
+      const CLASSES = ["5", "6", "7", "8", "9", "10", "11", "12", "Lehrer"];
+      const LEVELS = [10, 25, 50, 100];
+      const QUESTIONS = {
+        easy: [
+          q("Wie viele Minuten hat eine Stunde?", ["30", "45", "60", "90"], 2),
+          q("Welche Farbe entsteht aus Blau und Gelb?", ["Rot", "Gruen", "Lila", "Orange"], 1),
+          q("Was ist 9 + 8?", ["15", "16", "17", "18"], 2),
+          q("Welches Organ pumpt Blut?", ["Lunge", "Herz", "Magen", "Leber"], 1)
+        ],
+        medium: [
+          q("Wie viele Bundeslaender hat Deutschland?", ["12", "14", "16", "18"], 2),
+          q("Was ist 30 Prozent von 90?", ["18", "21", "24", "27"], 3),
+          q("Welche Zeitform ist 'I have learned'?", ["Simple Past", "Present Perfect", "Future", "Past Perfect"], 1),
+          q("Wie nennt man die gruenen Farbstoffe in Pflanzen?", ["Chlorophyll", "Hämoglobin", "Melanin", "Keratin"], 0)
+        ],
+        hard: [
+          q("Was ist die Ableitung von 3x hoch 2?", ["3x", "6x", "x hoch 3", "6"], 1),
+          q("Wann endete der Zweite Weltkrieg in Europa?", ["1918", "1933", "1945", "1961"], 2),
+          q("Was bedeutet 'although'?", ["weil", "obwohl", "deshalb", "niemals"], 1),
+          q("Wo findet Fotosynthese hauptsaechlich statt?", ["Mitochondrien", "Chloroplasten", "Zellkern", "Ribosomen"], 1)
+        ],
+        teacher: [
+          q("Was macht eine gute Pausenaktion aus?", ["fair und kurz", "moeglichst laut", "unklar", "nur fuer wenige"], 0),
+          q("Was sollte bei Schulspielen vermieden werden?", ["Teamwork", "Bloßstellen", "klare Regeln", "Spass"], 1),
+          q("Welche Regel passt zu Abi Vegas?", ["Chips statt Geld", "echtes Geld", "Namen sammeln", "Minuspunkte"], 0)
+        ]
+      };
+
+      const state = {
+        level: 0,
+        bankable: 0,
+        active: false,
+        waitingChoice: false,
+        currentQuestion: null,
+        scores: Object.fromEntries(CLASSES.map(k => [k, 0]))
+      };
+
+      const classSelect = document.querySelector("#classSelect");
+      const questionPanel = document.querySelector("#questionPanel");
+      const statusText = document.querySelector("#statusText");
+      const bankButton = document.querySelector("#bankButton");
+      const continueButton = document.querySelector("#continueButton");
+      const newRoundButton = document.querySelector("#newRoundButton");
+      const leaderboard = document.querySelector("#leaderboard");
+
+      function q(text, choices, correctIndex) { return { text, choices, correctIndex }; }
+      function formatClassName(k) { return k === "Lehrer" ? "Lehrer" : `${k}. Klasse`; }
+
+      function init() {
+        classSelect.innerHTML = CLASSES.map(k => `<option value="${k}">${formatClassName(k)}</option>`).join("");
+        const savedClass = localStorage.getItem("abiVegasClass");
+        classSelect.value = CLASSES.includes(savedClass) ? savedClass : "5";
+        classSelect.addEventListener("change", () => localStorage.setItem("abiVegasClass", classSelect.value));
+        bankButton.addEventListener("click", bankPoints);
+        continueButton.addEventListener("click", nextQuestion);
+        newRoundButton.addEventListener("click", startRound);
+        document.querySelector("#refreshButton").addEventListener("click", loadScores);
+        startRound();
+        loadScores();
+      }
+
+      function difficulty() {
+        const k = classSelect.value;
+        if (k === "Lehrer") return "teacher";
+        const grade = Number(k);
+        if (grade <= 6) return "easy";
+        if (grade <= 9) return "medium";
+        return "hard";
+      }
+
+      function startRound() {
+        state.level = 0;
+        state.bankable = 0;
+        state.active = true;
+        state.waitingChoice = false;
+        nextQuestion();
+      }
+
+      function nextQuestion() {
+        if (!state.active) return;
+        state.waitingChoice = false;
+        const pool = QUESTIONS[difficulty()];
+        state.currentQuestion = pool[Math.floor(Math.random() * pool.length)];
+        const prize = LEVELS[state.level];
+        statusText.textContent = `Stufe ${state.level + 1}: Diese Frage ist ${prize} Chips wert.`;
+        renderQuestion(prize);
+        updateButtons();
+      }
+
+      function renderQuestion(prize) {
+        const question = state.currentQuestion;
+        questionPanel.innerHTML = `<p class="chips">Aktueller moeglicher Gewinn: ${prize} Chips</p><h3>${question.text}</h3><div class="answer-grid">${question.choices.map((choice, index) => `<button class="secondary" data-answer="${index}">${choice}</button>`).join("")}</div>`;
+        questionPanel.querySelectorAll("[data-answer]").forEach(button => button.addEventListener("click", () => answerQuestion(Number(button.dataset.answer))));
+      }
+
+      function answerQuestion(index) {
+        if (!state.active || state.waitingChoice) return;
+        const question = state.currentQuestion;
+        questionPanel.querySelectorAll("button").forEach(button => button.disabled = true);
+        if (index !== question.correctIndex) {
+          state.active = false;
+          state.bankable = 0;
+          statusText.textContent = `Falsch. Richtig waere: ${question.choices[question.correctIndex]}. Diese Runde bringt keine Chips.`;
+          updateButtons();
+          return;
+        }
+
+        state.bankable = LEVELS[state.level];
+        state.waitingChoice = true;
+        if (state.level === LEVELS.length - 1) {
+          statusText.textContent = "Finale richtig. Die 100 Chips werden gesichert.";
+          bankPoints();
+          return;
+        }
+        statusText.textContent = `Richtig. ${state.bankable} Chips sichern oder fuer ${LEVELS[state.level + 1]} Chips weiter riskieren?`;
+        state.level += 1;
+        updateButtons();
+      }
+
+      async function bankPoints() {
+        if (!state.bankable) return;
+        const points = state.bankable;
+        const klasse = classSelect.value;
+        state.active = false;
+        state.waitingChoice = false;
+        state.bankable = 0;
+        statusText.textContent = `${formatClassName(klasse)} sichert ${points} Chips!`;
+        questionPanel.innerHTML = `<p class="muted">Runde beendet. Starte direkt die naechste Risiko-Leiter.</p>`;
+        updateButtons();
+        updateLocalScore(klasse, points);
+        try { await addPoints(klasse, points, "challenge"); await loadScores(); } catch (error) { console.warn(error); }
+      }
+
+      function updateButtons() {
+        bankButton.disabled = !state.waitingChoice || !state.bankable;
+        continueButton.disabled = !state.waitingChoice || !state.active;
+      }
+
+      function updateLocalScore(klasse, points) { state.scores[klasse] = (state.scores[klasse] || 0) + points; renderLeaderboard(); }
+      function jsonp(action, params = {}) {
+        return new Promise((resolve, reject) => {
+          const callbackName = `abiVegasCallback_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+          const url = new URL(BACKEND_URL);
+          url.searchParams.set("action", action); url.searchParams.set("callback", callbackName);
+          Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+          const script = document.createElement("script");
+          const timeout = setTimeout(() => { cleanup(); reject(new Error("Backend antwortet nicht.")); }, 10000);
+          function cleanup() { clearTimeout(timeout); delete window[callbackName]; script.remove(); }
+          window[callbackName] = data => { cleanup(); resolve(data); };
+          script.onerror = () => { cleanup(); reject(new Error("Backend konnte nicht geladen werden.")); };
+          script.src = url.toString(); document.body.appendChild(script);
+        });
+      }
+      function addPoints(klasse, points, game) { return jsonp("add", { klasse, points, game, code: localStorage.getItem("abiVegasPlayerCode") || createPlayerCode() }); }
+      async function loadScores() {
+        try {
+          const data = await jsonp("scores");
+          if (data.ok && data.scores) {
+            state.scores = Object.fromEntries(CLASSES.map(k => [k, 0]));
+            data.scores.forEach(item => { if (CLASSES.includes(String(item.klasse))) state.scores[String(item.klasse)] = Number(item.chips || 0); });
+          }
+        } catch (error) { console.warn(error); }
+        renderLeaderboard();
+      }
+      function renderLeaderboard() { leaderboard.innerHTML = Object.entries(state.scores).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>`<li><span>#${i+1} ${formatClassName(k)}</span><span class="chips">${v} Chips</span></li>`).join(""); }
+      function createPlayerCode() { const code = `player-${Math.random().toString(36).slice(2,10)}`; localStorage.setItem("abiVegasPlayerCode", code); return code; }
+
+      init();
+    </script>
+  </body>
+</html>
