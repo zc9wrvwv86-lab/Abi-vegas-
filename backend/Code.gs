@@ -1,15 +1,16 @@
-// Google Apps Script Backend für Abi Vegas
-// Einfügen in: Google Sheet -> Erweiterungen -> Apps Script
+// Google Apps Script Backend fuer Abi Vegas
+// Einfuegen in: Google Sheet -> Erweiterungen -> Apps Script
 // Danach: Bereitstellen -> Neue Bereitstellung -> Web-App
-// Ausführen als: Ich
+// Ausfuehren als: Ich
 // Zugriff: Jeder
 //
-// Wichtig: Das Google Sheet braucht zwei Tabellenblätter:
+// Wichtig: Das Google Sheet braucht zwei Tabellenblaetter:
 // scores mit Spalten: klasse | chips
 // log mit Spalten: timestamp | klasse | punkte | spiel | code
 
 const SHEET_SCORES = "scores";
 const SHEET_LOG = "log";
+const MAX_POINTS_PER_ADD = 200;
 
 function doGet(e) {
   const params = e.parameter || {};
@@ -56,7 +57,7 @@ function getScores_() {
 
 function addPoints_(params) {
   const klasse = String(params.klasse || "").trim();
-  const points = Math.max(0, Math.min(50, Number(params.points || 0)));
+  const points = Math.max(0, Math.min(MAX_POINTS_PER_ADD, Number(params.points || 0)));
   const game = String(params.game || "slot");
   const code = String(params.code || "unknown");
 
@@ -112,7 +113,7 @@ function addPoints_(params) {
   }
 }
 
-// Optionaler Reset. Ändere ADMIN_SECRET vor dem echten Einsatz.
+// Optionaler Reset. Aendere ADMIN_SECRET vor dem echten Einsatz.
 function resetScores_(params) {
   const ADMIN_SECRET = "VEGAS2026";
   if (params.secret !== ADMIN_SECRET) {
