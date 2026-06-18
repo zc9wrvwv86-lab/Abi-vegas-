@@ -70,23 +70,27 @@
       const SUITS = ["S", "H", "D", "C"];
       const QUESTIONS = {
         easy: [
+          q("Wie viele Minuten hat eine Schulstunde meistens?", ["30", "45", "60", "90"], 1),
           q("Was ist 6 + 7?", ["11", "12", "13", "14"], 2),
-          q("Welche Zahl kommt direkt nach 19?", ["18", "20", "21", "22"], 1),
-          q("Was heisst 'Gluck' auf Englisch?", ["luck", "look", "lock", "lake"], 0)
+          q("Was heisst Schule auf Englisch?", ["school", "street", "shop", "sport"], 0),
+          q("Welche Farbe entsteht aus Blau und Gelb?", ["Rot", "Gruen", "Lila", "Orange"], 1)
         ],
         medium: [
+          q("Wie viele Bundeslaender hat Deutschland?", ["12", "14", "16", "18"], 2),
           q("Was ist 25 Prozent von 80?", ["15", "20", "25", "30"], 1),
           q("Welche Wortart beschreibt Eigenschaften?", ["Nomen", "Verb", "Adjektiv", "Artikel"], 2),
-          q("In welchem Jahr fiel die Berliner Mauer?", ["1961", "1989", "1999", "1945"], 1)
+          q("Bei welchem Spiel will man nah an 21 kommen?", ["Roulette", "Blackjack", "Memory", "Schach"], 1)
         ],
         hard: [
-          q("Was ist die Ableitung von x hoch 2?", ["x", "2x", "x hoch 3", "2"], 1),
+          q("In welchem Jahr fiel die Berliner Mauer?", ["1961", "1989", "1999", "1945"], 1),
+          q("Was ist 12 x 12?", ["124", "132", "144", "156"], 2),
           q("Was bedeutet 'however'?", ["deshalb", "jedoch", "ausserdem", "niemals"], 1),
-          q("Was ist sin(90 Grad)?", ["0", "0,5", "1", "2"], 2)
+          q("Welches Fach passt am ehesten zu Karten und Wahrscheinlichkeiten?", ["Mathe", "Kunst", "Sport", "Musik"], 0)
         ],
         teacher: [
           q("Was macht ein gutes Schulspiel aus?", ["kurz, fair und verstaendlich", "moeglichst kompliziert", "unfair", "nur fuer Profis"], 0),
-          q("Was ist beim Abi-Gag wichtiger als Gewinnen?", ["Fairness", "Lautstaerke", "Stress", "Chaos"], 0)
+          q("Was ist beim Abi-Streich wichtiger als Gewinnen?", ["Fairness", "Lautstaerke", "Stress", "Chaos"], 0),
+          q("Womit spielen wir bei Abi Vegas statt echtem Geld?", ["Chips", "Noten", "Hausaufgaben", "Namen"], 0)
         ]
       };
 
