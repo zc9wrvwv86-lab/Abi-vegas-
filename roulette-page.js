@@ -16,22 +16,30 @@ const BET_RULES = {
 };
 const QUESTIONS = {
   easy: [
+    q("Wie viele Minuten hat eine Stunde?", ["30", "45", "60", "90"], 2),
     q("Was ist 7 x 8?", ["54", "56", "64", "49"], 1),
-    q("Wie heisst die Hauptstadt von Deutschland?", ["Berlin", "Paris", "Rom", "Wien"], 0),
-    q("Was heisst Schule auf Englisch?", ["school", "street", "chair", "shop"], 0)
+    q("Was heisst Schule auf Englisch?", ["school", "street", "shop", "sport"], 0),
+    q("Welche Farbe entsteht aus Blau und Gelb?", ["Rot", "Gruen", "Lila", "Orange"], 1),
+    q("Welches Organ pumpt Blut?", ["Lunge", "Herz", "Magen", "Leber"], 1)
   ],
   medium: [
-    q("In welchem Jahr fiel die Berliner Mauer?", ["1961", "1989", "1999", "1945"], 1),
+    q("Wie viele Bundeslaender hat Deutschland?", ["12", "14", "16", "18"], 2),
     q("Was ist 15 Prozent von 200?", ["20", "25", "30", "35"], 2),
-    q("Bei welchem Spiel will man nahe an 21 kommen?", ["Roulette", "Blackjack", "Memory", "Schach"], 1)
+    q("Welche Wortart beschreibt Eigenschaften?", ["Nomen", "Verb", "Adjektiv", "Artikel"], 2),
+    q("Welcher Fluss fliesst durch Koeln?", ["Elbe", "Rhein", "Donau", "Spree"], 1),
+    q("Bei welchem Spiel will man nah an 21 kommen?", ["Roulette", "Blackjack", "Memory", "Schach"], 1)
   ],
   hard: [
-    q("Was ist die Ableitung von x hoch 2?", ["x", "2x", "x hoch 3", "2"], 1),
+    q("Was ist 12 x 12?", ["124", "132", "144", "156"], 2),
+    q("In welchem Jahr fiel die Berliner Mauer?", ["1961", "1989", "1999", "1945"], 1),
     q("Was bedeutet 'however'?", ["deshalb", "jedoch", "ausserdem", "niemals"], 1),
-    q("Was ist beim Abi-Gag wichtiger als Gewinnen?", ["Fairness", "Lautstaerke", "Stress", "Chaos"], 0)
+    q("Was zeigt eine Temperaturkurve im Klimadiagramm?", ["Temperatur", "Einwohnerzahl", "Hoehe", "Uhrzeit"], 0),
+    q("Was ist beim Abi-Streich wichtiger als Gewinnen?", ["Fairness", "Lautstaerke", "Stress", "Chaos"], 0)
   ],
   teacher: [
     q("Was macht ein gutes Schulspiel aus?", ["kurz, fair und verstaendlich", "kompliziert und lang", "unfair", "nur fuer Profis"], 0),
+    q("Welche Regel passt zu Abi Vegas?", ["Chips statt Geld", "echtes Geld", "Namen sammeln", "Minuspunkte"], 0),
+    q("Was zaehlt in der App?", ["Klassenpunkte", "Einzelnamen", "Noten", "Fehltage"], 0),
     q("Was ist die schulische Version von Casino-Glueck?", ["Teamwork und Wissen", "echtes Geld", "Zufallsnoten", "Nachsitzen"], 0)
   ]
 };
