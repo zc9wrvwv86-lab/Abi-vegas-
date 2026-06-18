@@ -67,7 +67,7 @@ body::after {
 }
 
 .vegas-bg::before {
-  content: "ABW";
+  content: "ABV";
   position: fixed;
   left: max(20px, calc((100vw - 1420px) / 2));
   top: 50%;
