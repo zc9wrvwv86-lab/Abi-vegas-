@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Abi Vegas – um jeden Punkt gepokert</title>
-    <meta name="description" content="Abi Vegas Casino-Spiel für den Abi-Gag" />
+    <title>Abi Vegas - Casino-Challenge</title>
+    <meta name="description" content="Abi Vegas Casino-Challenge für den Abi-Gag - nur mit Spielchips" />
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="abv-fix.css" />
     <link rel="stylesheet" href="home-games.css" />
@@ -19,69 +19,48 @@
       <span class="bg-icon bg-icon-6">🃏</span>
     </div>
 
-    <main class="app">
-      <section class="hero card marquee-card">
+    <main class="app compact-app">
+      <header class="hero card marquee-card compact-hero">
         <div class="brand-row">
-          <div class="school-badge" aria-label="ABV Logo Platzhalter">ABV</div>
+          <div class="school-badge" aria-label="ABV">ABV</div>
           <p class="eyebrow">Abi Vegas</p>
         </div>
-        <h1>Um jeden Punkt gepokert</h1>
-        <p class="subtitle">
-          Wähle deine Klasse und sammle Chips in Slot, Roulette, Blackjack und kurzen Event-Spielen.
-        </p>
-      </section>
+        <h1>Casino-Challenge</h1>
+        <p class="subtitle">Klasse wählen, Spiel starten und Chips sammeln.</p>
+      </header>
 
-      <section class="card setup-card casino-panel">
-        <label for="classSelect">Deine Klasse</label>
-        <select id="classSelect" aria-label="Klasse auswählen"></select>
-        <p class="hint">Keine Namen nötig. Punkte zählen nur für die Klasse.</p>
-      </section>
-
-      <section class="game-menu" aria-label="Spielauswahl">
-        <div class="game-menu-head">
-          <p class="eyebrow">Spielauswahl</p>
+      <section class="card launchpad casino-panel" aria-label="Schnellstart">
+        <div class="setup-row">
+          <label for="classSelect">Deine Klasse</label>
+          <select id="classSelect" aria-label="Klasse auswählen"></select>
         </div>
-        <div class="game-menu-grid">
-          <a class="game-option game-option-featured" href="event.html">
-            <span class="game-tag">Live</span>
-            <h2>Event-Zentrale</h2>
-            <p>Rangliste, Spielstart, Ablauf und Punkte-Balance für die ganze Abi-Vegas-Stunde.</p>
-            <span class="game-action">Öffnen</span>
-          </a>
+
+        <nav class="game-menu-grid" aria-label="Drei Spiele">
           <a class="game-option" href="#slotGame">
-            <span class="game-tag">Schnell</span>
-            <h2>Slot Machine</h2>
-            <p>Ein Dreh, kleine Chips, gut für kurze Pausen im Ablauf.</p>
+            <span class="game-icon" aria-hidden="true">🎰</span>
+            <strong>Slot</strong>
             <span class="game-action">Spielen</span>
           </a>
           <a class="game-option" href="roulette.html">
-            <span class="game-tag">Casino</span>
-            <h2>Abi Roulette</h2>
-            <p>Setzen, drehen, Frage beantworten. Das Rad landet sichtbar auf dem Ergebnis.</p>
+            <span class="game-icon" aria-hidden="true">🎯</span>
+            <strong>Roulette</strong>
             <span class="game-action">Öffnen</span>
           </a>
           <a class="game-option" href="blackjack.html">
-            <span class="game-tag">21</span>
-            <h2>Blackjack</h2>
-            <p>Klasse gegen Dealer. Gewinn schaltet eine Wissensfrage frei.</p>
+            <span class="game-icon" aria-hidden="true">♠</span>
+            <strong>Blackjack</strong>
             <span class="game-action">Öffnen</span>
           </a>
-          <a class="game-option" href="challenge.html">
-            <span class="game-tag">Risiko</span>
-            <h2>Risiko-Leiter</h2>
-            <p>10, 25, 50 oder 100 Chips sichern – oder weiter zocken.</p>
-            <span class="game-action">Öffnen</span>
-          </a>
-          <a class="game-option" href="jackpot.html">
-            <span class="game-tag">Bühne</span>
-            <h2>Bühnen-Jackpot</h2>
-            <p>Harmlose Aufgaben und Schätzfragen für den Live-Teil eures Abi-Streichs.</p>
-            <span class="game-action">Öffnen</span>
-          </a>
-        </div>
+        </nav>
+
+        <p class="play-note">Nur Spielchips. Kein Echtgeld, keine Käufe.</p>
       </section>
 
-      <section id="slotGame" class="card game-card casino-panel">
+      <section id="slotGame" class="card game-card casino-panel compact-slot">
+        <div class="section-head">
+          <h2>Slot Machine</h2>
+          <span class="mini-label">1 Dreh / 30 Sek.</span>
+        </div>
         <div class="slot-machine" aria-live="polite">
           <div class="reel" id="reel1">🎰</div>
           <div class="reel" id="reel2">🎲</div>
@@ -93,9 +72,12 @@
         <div id="chipBurst" class="chip-burst" aria-hidden="true"></div>
       </section>
 
-      <section class="card leaderboard-card casino-panel">
+      <section class="card leaderboard-card casino-panel compact-ranking">
         <div class="section-head">
-          <h2>Live-Rangliste</h2>
+          <div>
+            <p class="eyebrow">Live</p>
+            <h2>Top 5</h2>
+          </div>
           <button id="refreshButton" class="ghost-button">Aktualisieren</button>
         </div>
         <ol id="leaderboard" class="leaderboard"></ol>
