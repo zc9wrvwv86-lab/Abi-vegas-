@@ -1,80 +1,210 @@
-.game-menu {
-  position: relative;
-  z-index: 2;
-  margin: 18px 0;
+.compact-app {
+  width: min(760px, 100%);
+  padding: 14px;
 }
 
-.game-menu-head {
-  margin-bottom: 12px;
+.compact-app .card {
+  margin: 10px 0;
+  border-radius: 8px;
+}
+
+.compact-app select,
+.compact-app button {
+  border-radius: 8px;
+}
+
+.compact-hero {
+  padding: 20px 16px;
+}
+
+.compact-hero .brand-row {
+  margin-bottom: 6px;
+}
+
+.compact-hero h1 {
+  font-size: clamp(2.35rem, 10vw, 4.7rem);
+}
+
+.compact-hero .subtitle {
+  margin: 10px 0 0;
+}
+
+.launchpad {
+  padding: 16px;
+}
+
+.setup-row {
+  display: grid;
+  grid-template-columns: auto minmax(170px, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.setup-row label {
+  margin: 0;
 }
 
 .game-menu-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
 }
 
 .game-option {
   display: grid;
-  gap: 10px;
-  min-height: 168px;
-  padding: 18px;
-  border: 1px solid rgba(255, 211, 106, 0.26);
-  border-radius: 18px;
+  place-items: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 104px;
+  padding: 10px 6px;
+  border: 1px solid rgba(255, 211, 106, 0.3);
+  border-radius: 8px;
   color: var(--text);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.055));
+  background: rgba(0, 0, 0, 0.24);
+  text-align: center;
   text-decoration: none;
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
 }
 
-.game-option-featured {
-  grid-column: 1 / -1;
-  min-height: 142px;
-  border-color: rgba(255, 211, 106, 0.58);
-  background: linear-gradient(135deg, rgba(255, 211, 106, 0.18), rgba(255, 79, 109, 0.11));
-}
-
-.game-option:hover {
-  border-color: rgba(255, 211, 106, 0.5);
+.game-option:hover,
+.game-option:focus-visible {
+  border-color: rgba(255, 211, 106, 0.78);
+  background: rgba(255, 211, 106, 0.1);
   transform: translateY(-2px);
+  outline: none;
 }
 
-.game-option h2 {
-  margin: 0;
-  font-size: 1.25rem;
+.game-icon {
+  font-size: 1.9rem;
+  line-height: 1;
 }
 
-.game-option p {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.35;
-}
-
-.game-tag {
-  width: max-content;
-  max-width: 100%;
-  padding: 6px 10px;
-  border-radius: 999px;
-  color: #18070b;
-  background: linear-gradient(135deg, var(--gold), #ff9f43);
-  font-size: 0.76rem;
-  font-weight: 950;
+.game-option strong {
+  min-width: 0;
+  font-size: clamp(0.82rem, 3.5vw, 1rem);
+  overflow-wrap: anywhere;
 }
 
 .game-action {
-  align-self: end;
   color: var(--gold);
-  font-weight: 950;
+  font-size: 0.75rem;
+  font-weight: 900;
 }
 
-@media (max-width: 720px) {
-  .game-menu-grid {
-    grid-template-columns: 1fr;
+.play-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.compact-slot {
+  padding: 18px;
+}
+
+.compact-slot .slot-machine {
+  gap: 8px;
+  margin: 14px 0 12px;
+}
+
+.compact-slot .reel {
+  min-height: 78px;
+  border-radius: 8px;
+  font-size: clamp(2.1rem, 12vw, 4rem);
+}
+
+.compact-slot .result {
+  margin: 12px 0 4px;
+  font-size: 1.05rem;
+}
+
+.compact-slot .hint {
+  min-height: 1.2em;
+  margin: 4px 0 0;
+  text-align: center;
+}
+
+.mini-label {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.compact-ranking {
+  padding: 16px;
+}
+
+.compact-ranking .eyebrow {
+  font-size: 0.7rem;
+}
+
+.compact-ranking .ghost-button {
+  min-height: 42px;
+  border-radius: 8px;
+}
+
+.compact-ranking .leaderboard {
+  margin-top: 10px;
+}
+
+.compact-ranking .leaderboard li {
+  margin: 6px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+@media (min-width: 760px) {
+  .compact-app {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 460px) {
+  .compact-app {
+    padding: 8px;
   }
 
-  .game-option,
-  .game-option-featured {
-    min-height: 144px;
-    border-radius: 16px;
+  .compact-app .card {
+    margin: 8px 0;
+  }
+
+  .compact-hero {
+    padding: 16px 12px;
+  }
+
+  .compact-hero .school-badge {
+    width: 46px;
+    height: 46px;
+  }
+
+  .setup-row {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .setup-row label {
+    font-size: 0.82rem;
+  }
+
+  .setup-row select {
+    min-height: 46px;
+  }
+
+  .game-option {
+    min-height: 92px;
+    padding: 8px 3px;
+  }
+
+  .game-icon {
+    font-size: 1.65rem;
+  }
+
+  .game-action {
+    font-size: 0.68rem;
+  }
+
+  .compact-ranking .leaderboard li {
+    font-size: 0.86rem;
   }
 }
