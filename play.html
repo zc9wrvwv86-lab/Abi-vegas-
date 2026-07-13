@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Abi Vegas - Casino-Challenge</title>
+    <meta name="description" content="Abi Vegas Casino-Challenge für den Abi-Gag - nur mit Spielchips" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="abv-fix.css" />
+    <link rel="stylesheet" href="home-games.css" />
+  </head>
+  <body>
+    <div class="vegas-bg" aria-hidden="true">
+      <span class="bg-icon bg-icon-1">🎲</span>
+      <span class="bg-icon bg-icon-2">♠</span>
+      <span class="bg-icon bg-icon-3">💎</span>
+      <span class="bg-icon bg-icon-4">🎰</span>
+      <span class="bg-icon bg-icon-5">♥</span>
+      <span class="bg-icon bg-icon-6">🃏</span>
+    </div>
+
+    <main class="app compact-app">
+      <header class="hero card marquee-card compact-hero">
+        <div class="brand-row">
+          <div class="school-badge" aria-label="ABV">ABV</div>
+          <p class="eyebrow">Abi Vegas</p>
+        </div>
+        <h1>Casino-Challenge</h1>
+        <p class="subtitle">Klasse wählen, Spiel starten und Chips sammeln.</p>
+      </header>
+
+      <section class="card launchpad casino-panel" aria-label="Schnellstart">
+        <div class="setup-row">
+          <label for="classSelect">Deine Klasse</label>
+          <select id="classSelect" aria-label="Klasse auswählen"></select>
+        </div>
+
+        <nav class="game-menu-grid" aria-label="Drei Spiele">
+          <a class="game-option" href="#slotGame">
+            <span class="game-icon" aria-hidden="true">🎰</span>
+            <strong>Slot</strong>
+            <span class="game-action">Spielen</span>
+          </a>
+          <a class="game-option" href="roulette.html">
+            <span class="game-icon" aria-hidden="true">🎯</span>
+            <strong>Roulette</strong>
+            <span class="game-action">Öffnen</span>
+          </a>
+          <a class="game-option" href="blackjack.html">
+            <span class="game-icon" aria-hidden="true">♠</span>
+            <strong>Blackjack</strong>
+            <span class="game-action">Öffnen</span>
+          </a>
+        </nav>
+
+        <p class="play-note">Nur Spielchips. Kein Echtgeld, keine Käufe.</p>
+      </section>
+
+      <section id="slotGame" class="card game-card casino-panel compact-slot">
+        <div class="section-head">
+          <h2>Slot Machine</h2>
+          <span class="mini-label">1 Dreh / 30 Sek.</span>
+        </div>
+        <div class="slot-machine" aria-live="polite">
+          <div class="reel" id="reel1">🎰</div>
+          <div class="reel" id="reel2">🎲</div>
+          <div class="reel" id="reel3">🃏</div>
+        </div>
+        <button id="spinButton" class="primary-button">Drehen</button>
+        <p id="resultText" class="result">Bereit für den ersten Dreh?</p>
+        <p id="cooldownText" class="hint"></p>
+        <div id="chipBurst" class="chip-burst" aria-hidden="true"></div>
+      </section>
+
+      <section class="card leaderboard-card casino-panel compact-ranking">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Live</p>
+            <h2>Top 5</h2>
+          </div>
+          <button id="refreshButton" class="ghost-button">Aktualisieren</button>
+        </div>
+        <ol id="leaderboard" class="leaderboard"></ol>
+      </section>
+    </main>
+
+    <script src="slot-app.js"></script>
+  </body>
+</html>
