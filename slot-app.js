@@ -27,12 +27,15 @@ function init() {
   const savedClass = localStorage.getItem("abiVegasClass");
   classSelect.value = CLASSES.includes(savedClass) ? savedClass : CLASSES[0];
   localStorage.setItem("abiVegasClass", classSelect.value);
-  classSelect.addEventListener("change", () => localStorage.setItem("abiVegasClass", classSelect.value));
+  classSelect.addEventListener("change", () => {
+    localStorage.setItem("abiVegasClass", classSelect.value);
+    renderLeaderboard();
+  });
   spinButton.addEventListener("click", spin);
-  refreshButton.addEventListener("click", loadScores);
+  refreshButton.addEventListener("click", () => loadScores().catch(showOfflineStatus));
   updateCooldown();
   renderLeaderboard();
-  loadScores();
+  loadScores().catch(showOfflineStatus);
   setInterval(updateCooldown, 1000);
 }
 
@@ -87,7 +90,7 @@ async function spin() {
     await loadScores();
   } catch (error) {
     console.warn(error);
-    resultText.textContent += " Die Punkte sind aktuell nur lokal gespeichert, weil das Backend nicht erreichbar ist.";
+    resultText.textContent += " Die Punkte sind vorerst nur auf diesem Gerät gespeichert.";
   } finally {
     state.isSpinning = false;
     updateCooldown();
@@ -150,9 +153,25 @@ function updateCooldown() {
   }
 }
 
-function renderLeaderboard() {
+function visibleRanking() {
   const sorted = Object.entries(state.scores).sort((a, b) => b[1] - a[1]);
-  leaderboard.innerHTML = sorted.map(([klasse, chips], index) => `<li><span class="rank-name">#${index + 1} ${formatClassName(klasse)}</span><span class="chips">${chips} Chips</span></li>`).join("");
+  const visible = sorted.slice(0, 5);
+  const selected = classSelect.value;
+  if (selected && !visible.some(([klasse]) => klasse === selected)) {
+    const selectedEntry = sorted.find(([klasse]) => klasse === selected);
+    if (selectedEntry) visible[visible.length - 1] = selectedEntry;
+  }
+  return visible;
+}
+
+function renderLeaderboard() {
+  leaderboard.innerHTML = visibleRanking().map(([klasse, chips], index) =>
+    `<li><span class="rank-name">#${index + 1} ${formatClassName(klasse)}</span><span class="chips">${chips} Chips</span></li>`
+  ).join("");
+}
+
+function showOfflineStatus() {
+  console.warn("Live-Rangliste ist derzeit nicht erreichbar.");
 }
 
 function jsonp(action, params = {}) {
