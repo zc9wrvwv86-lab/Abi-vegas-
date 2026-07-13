@@ -69,11 +69,7 @@ function ns(name) { return document.createElementNS("http://www.w3.org/2000/svg"
 function normalizeAngle(angle) { return ((angle % 360) + 360) % 360; }
 
 function init() {
-  classSelect.innerHTML = CLASSES.map(k => `<option value="${k}">${formatClassName(k)}</option>`).join("");
-  const savedClass = localStorage.getItem("abiVegasClass");
-  classSelect.value = CLASSES.includes(savedClass) ? savedClass : "5";
-  localStorage.setItem("abiVegasClass", classSelect.value);
-  classSelect.addEventListener("change", () => localStorage.setItem("abiVegasClass", classSelect.value));
+  AbiVegasDevice.initClassSelect(classSelect, CLASSES, formatClassName);
   document.querySelectorAll("[data-stake]").forEach(btn => btn.addEventListener("click", () => selectStake(btn)));
   spinButton.addEventListener("click", spin);
   document.querySelector("#refreshButton").addEventListener("click", loadScores);
@@ -82,6 +78,8 @@ function init() {
   updateStakeButtons();
   renderBetStatus();
   resetQuestionPanel();
+  AbiVegasDevice.onReady(() => updateStakeButtons());
+  AbiVegasDevice.onWalletChange(() => updateStakeButtons());
   loadScores();
 }
 
@@ -194,13 +192,14 @@ function enforceStakeLimit() {
 
 function updateStakeButtons() {
   const maxStake = getMaxStakeForCurrentBet();
+  const available = AbiVegasDevice.tokens();
   document.querySelectorAll("[data-stake]").forEach(btn => {
     const value = Number(btn.dataset.stake);
-    btn.disabled = value > maxStake || state.spinning;
-    btn.title = value > maxStake ? `Maximal ${maxStake} Chips fuer diese Wettart` : "";
+    btn.disabled = value > maxStake || value > available || state.spinning || !AbiVegasDevice.isRegistered();
+    btn.title = value > maxStake ? `Maximal ${maxStake} Chips fuer diese Wettart` : value > available ? "Nicht genug Spiel-Tokens" : "";
     btn.classList.toggle("active", value === state.stake);
   });
-  spinButton.disabled = state.spinning;
+  spinButton.disabled = state.spinning || !AbiVegasDevice.canAfford(state.stake);
 }
 
 function renderBetStatus() {
@@ -235,6 +234,12 @@ async function spin() {
 
   resetQuestionPanel();
   enforceStakeLimit();
+  const payment = AbiVegasDevice.spend(state.stake);
+  if (!payment.ok) {
+    resultText.textContent = payment.reason === "register" ? "Lege zuerst deine Klasse fest." : "Nicht genug Spiel-Tokens fuer diesen Einsatz.";
+    updateStakeButtons();
+    return;
+  }
   const outcome = randomOutcome();
   const wheelTarget = targetRotationForValue(outcome.value);
   state.rotation = spinToTarget(state.rotation, wheelTarget, 4);
@@ -246,7 +251,7 @@ async function spin() {
   updateStakeButtons();
   group.style.transform = `rotate(${state.rotation}deg)`;
   if (ballGroup) ballGroup.style.transform = `rotate(${state.ballRotation}deg)`;
-  resultText.textContent = "Das Rad dreht ...";
+  resultText.textContent = `Das Rad dreht ... Noch ${payment.tokens} Spiel-Tokens.`;
   await sleep(2400);
   state.spinning = false;
   updateStakeButtons();
@@ -322,7 +327,7 @@ function jsonp(action, params = {}) {
     script.src = url.toString(); document.body.appendChild(script);
   });
 }
-function addPoints(klasse, points, game) { return jsonp("add", { klasse, points, game, code: localStorage.getItem("abiVegasPlayerCode") || createPlayerCode() }); }
+function addPoints(klasse, points, game) { return jsonp("add", { klasse, points, game, code: AbiVegasDevice.playerCode() }); }
 async function loadScores() {
   try {
     const data = await jsonp("scores");
@@ -340,3 +345,4 @@ function renderLeaderboard() { leaderboard.innerHTML = Object.entries(state.scor
 function createPlayerCode() { const code = `player-${Math.random().toString(36).slice(2,10)}`; localStorage.setItem("abiVegasPlayerCode", code); return code; }
 
 init();
+
