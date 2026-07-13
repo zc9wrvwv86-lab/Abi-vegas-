@@ -1,0 +1,111 @@
+.device-wallet-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 12px 0;
+  overflow: hidden;
+  border: 1px solid rgba(222, 176, 79, .65);
+  border-radius: 8px;
+  background: #d9a84f;
+}
+
+.device-wallet-bar > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 13px;
+  background: #170708;
+}
+
+.device-wallet-bar small {
+  color: rgba(247, 231, 199, .68);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.device-wallet-bar strong {
+  color: #ffe39b;
+  text-align: right;
+}
+
+.device-registration {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 2, 3, .94);
+}
+
+.device-registration-dialog {
+  width: min(100%, 440px);
+  padding: 24px;
+  border: 2px solid #d9a84f;
+  border-radius: 8px;
+  background: #22090b;
+  color: #f7e7c7;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .65);
+}
+
+.device-registration-kicker {
+  margin: 0 0 7px;
+  color: #f0bc58;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.device-registration-dialog h2 {
+  margin: 0 0 10px;
+  color: #ffe39b;
+  font: 700 28px/1.05 Georgia, serif;
+}
+
+.device-registration-dialog p {
+  margin: 0 0 18px;
+  line-height: 1.45;
+}
+
+.device-registration-dialog label,
+.device-registration-dialog small {
+  display: block;
+  margin: 9px 0 6px;
+  color: rgba(247, 231, 199, .76);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.device-registration-dialog select,
+.device-registration-dialog button {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #d9a84f;
+  border-radius: 7px;
+  padding: 0 12px;
+  font: 800 16px Arial, sans-serif;
+}
+
+.device-registration-dialog select {
+  background: #090405;
+  color: #fff0cf;
+}
+
+.device-registration-dialog button {
+  margin-top: 12px;
+  background: #7f1116;
+  color: #fff4d9;
+}
+
+.device-registration-dialog button:disabled {
+  opacity: .45;
+}
+
+@media (max-width: 560px) {
+  .device-wallet-bar { grid-template-columns: 1fr; }
+  .device-wallet-bar > span { padding: 9px 11px; }
+}
+
