@@ -322,7 +322,9 @@ function jsonp(action, params = {}) {
     script.src = url.toString(); document.body.appendChild(script);
   });
 }
-function addPoints(klasse, points, game) { return jsonp("add", { klasse, points, game, code: localStorage.getItem("abiVegasPlayerCode") || createPlayerCode() }); }
+function addPoints(klasse, points, game) {
+  return AbiVegasTeam.addPoints(points, game);
+}
 async function loadScores() {
   try {
     const data = await jsonp("scores");
