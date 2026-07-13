@@ -205,7 +205,7 @@ function jsonp(action, params = {}) {
 }
 
 function addPoints(klasse, points, game) {
-  return jsonp("add", { klasse, points, game, code: localStorage.getItem("abiVegasPlayerCode") || createPlayerCode() });
+  return AbiVegasTeam.addPoints(points, game);
 }
 
 async function loadScores() {
