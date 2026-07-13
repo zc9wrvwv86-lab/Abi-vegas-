@@ -6,6 +6,7 @@
     <title>Blackjack 21 - Abi Vegas</title>
     <meta name="description" content="Abi Vegas Blackjack-Spiel mit Klassenpunkten" />
     <link rel="stylesheet" href="event-game.css" />
+    <link rel="stylesheet" href="device-wallet.css" />
   </head>
   <body>
     <main class="event-page">
@@ -64,9 +65,11 @@
       </section>
     </main>
 
+    <script src="device-wallet.js"></script>
     <script>
       const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwX03awlXSE0UpGNAPfqugNwVJLqO_kv6ETfIaHREPLwBcwylxGbcjv3xWIjL1RWWGmHw/exec";
       const CLASSES = ["5", "6", "7", "8", "9", "10", "11", "12", "Lehrer"];
+      const BLACKJACK_COST = 10;
       const SUITS = [
         { symbol: "♠", name: "Pik", red: false },
         { symbol: "♥", name: "Herz", red: true },
@@ -124,15 +127,17 @@
       function formatClassName(k) { return k === "Lehrer" ? "Lehrer" : `${k}. Klasse`; }
 
       function init() {
-        classSelect.innerHTML = CLASSES.map(k => `<option value="${k}">${formatClassName(k)}</option>`).join("");
-        const savedClass = localStorage.getItem("abiVegasClass");
-        classSelect.value = CLASSES.includes(savedClass) ? savedClass : "5";
-        classSelect.addEventListener("change", () => localStorage.setItem("abiVegasClass", classSelect.value));
+        AbiVegasDevice.initClassSelect(classSelect, CLASSES, formatClassName);
         hitButton.addEventListener("click", hit);
         standButton.addEventListener("click", stand);
         newRoundButton.addEventListener("click", newRound);
         document.querySelector("#refreshButton").addEventListener("click", loadScores);
-        newRound();
+        AbiVegasDevice.onReady(() => {
+          updateButtons();
+          if (!state.player.length) newRound();
+        });
+        AbiVegasDevice.onWalletChange(() => updateButtons());
+        updateButtons();
         loadScores();
       }
 
@@ -164,13 +169,20 @@
       }
 
       function newRound() {
+        if (state.player.length && !state.roundOver) return;
+        const payment = AbiVegasDevice.spend(BLACKJACK_COST);
+        if (!payment.ok) {
+          roundResult.textContent = payment.reason === "register" ? "Lege zuerst deine Klasse fest." : "Deine Spiel-Tokens sind aufgebraucht.";
+          updateButtons();
+          return;
+        }
         state.deck = shuffle(buildDeck());
         state.player = [draw(), draw()];
         state.dealer = [draw(), draw()];
         state.roundOver = false;
         state.pending = null;
         questionPanel.innerHTML = `<p class="muted">Nach einem Gewinn erscheint hier die Frage.</p>`;
-        roundResult.textContent = "Zieh eine Karte oder bleib stehen.";
+        roundResult.textContent = `Zieh eine Karte oder bleib stehen. Noch ${payment.tokens} Spiel-Tokens.`;
         renderHands(false);
         updateButtons();
 
@@ -204,8 +216,9 @@
       }
 
       function updateButtons() {
-        hitButton.disabled = state.roundOver || Boolean(state.pending);
-        standButton.disabled = state.roundOver || Boolean(state.pending);
+        hitButton.disabled = !state.player.length || state.roundOver || Boolean(state.pending);
+        standButton.disabled = !state.player.length || state.roundOver || Boolean(state.pending);
+        newRoundButton.disabled = !AbiVegasDevice.isRegistered() || (!state.roundOver && state.player.length > 0) || !AbiVegasDevice.canAfford(BLACKJACK_COST);
       }
 
       function hit() {
@@ -289,7 +302,7 @@
           script.src = url.toString(); document.body.appendChild(script);
         });
       }
-      function addPoints(klasse, points, game) { return jsonp("add", { klasse, points, game, code: localStorage.getItem("abiVegasPlayerCode") || createPlayerCode() }); }
+      function addPoints(klasse, points, game) { return jsonp("add", { klasse, points, game, code: AbiVegasDevice.playerCode() }); }
       async function loadScores() {
         try {
           const data = await jsonp("scores");
@@ -307,3 +320,4 @@
     </script>
   </body>
 </html>
+
