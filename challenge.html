@@ -6,6 +6,7 @@
     <title>Risiko-Leiter - Abi Vegas</title>
     <meta name="description" content="Abi Vegas Risiko-Leiter mit Klassenpunkten" />
     <link rel="stylesheet" href="event-game.css" />
+      <link rel="stylesheet" href="team-session.css" />
   </head>
   <body>
     <main class="event-page">
@@ -210,7 +211,7 @@
           script.src = url.toString(); document.body.appendChild(script);
         });
       }
-      function addPoints(klasse, points, game) { return jsonp("add", { klasse, points, game, code: localStorage.getItem("abiVegasPlayerCode") || createPlayerCode() }); }
+      function addPoints(klasse, points, game) { return AbiVegasTeam.addPoints(points, game); }
       async function loadScores() {
         try {
           const data = await jsonp("scores");
@@ -226,5 +227,6 @@
 
       init();
     </script>
+      <script src="team-session.js"></script>
   </body>
 </html>
