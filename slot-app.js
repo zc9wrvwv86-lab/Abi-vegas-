@@ -2,6 +2,7 @@ const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwX03awlXSE0UpGNAPf
 const CLASSES = ["5", "6", "7", "8", "9", "10", "11", "12", "Lehrer"];
 const SYMBOLS = ["🎰", "🎲", "🃏", "💎", "🍒", "7️⃣"];
 const COOLDOWN_MS = 30_000;
+const SLOT_COST = 10;
 
 const classSelect = document.querySelector("#classSelect");
 const spinButton = document.querySelector("#spinButton");
@@ -23,16 +24,11 @@ function formatClassName(klasse) {
 }
 
 function init() {
-  classSelect.innerHTML = CLASSES.map((klasse) => `<option value="${klasse}">${formatClassName(klasse)}</option>`).join("");
-  const savedClass = localStorage.getItem("abiVegasClass");
-  classSelect.value = CLASSES.includes(savedClass) ? savedClass : CLASSES[0];
-  localStorage.setItem("abiVegasClass", classSelect.value);
-  classSelect.addEventListener("change", () => {
-    localStorage.setItem("abiVegasClass", classSelect.value);
-    renderLeaderboard();
-  });
+  AbiVegasDevice.initClassSelect(classSelect, CLASSES, formatClassName);
   spinButton.addEventListener("click", spin);
   refreshButton.addEventListener("click", () => loadScores().catch(showOfflineStatus));
+  AbiVegasDevice.onReady(() => updateCooldown());
+  AbiVegasDevice.onWalletChange(() => updateCooldown());
   updateCooldown();
   renderLeaderboard();
   loadScores().catch(showOfflineStatus);
@@ -66,6 +62,15 @@ async function spin() {
     return;
   }
 
+  const payment = AbiVegasDevice.spend(SLOT_COST);
+  if (!payment.ok) {
+    resultText.textContent = payment.reason === "register"
+      ? "Lege zuerst deine Klasse fest."
+      : "Deine Spiel-Tokens sind aufgebraucht.";
+    updateCooldown();
+    return;
+  }
+
   const klasse = classSelect.value;
   const result = [randomItem(SYMBOLS), randomItem(SYMBOLS), randomItem(SYMBOLS)];
   const points = calculatePoints(result);
@@ -80,7 +85,7 @@ async function spin() {
   showResultPop();
   await animateReels(result);
 
-  resultText.textContent = `${formatClassName(klasse)} gewinnt ${points} Chips!`;
+  resultText.textContent = `${formatClassName(klasse)} gewinnt ${points} Klassen-Chips! Noch ${payment.tokens} Spiel-Tokens.`;
   showResultPop();
   createChipBurst(points);
   updateLocalScore(klasse, points);
@@ -147,9 +152,15 @@ function updateCooldown() {
   } else if (remaining > 0) {
     spinButton.disabled = true;
     cooldownText.textContent = `Nächster Dreh in ${Math.ceil(remaining / 1000)} Sekunden.`;
+  } else if (!AbiVegasDevice.isRegistered()) {
+    spinButton.disabled = true;
+    cooldownText.textContent = "Bitte zuerst eine Klasse festlegen.";
+  } else if (!AbiVegasDevice.canAfford(SLOT_COST)) {
+    spinButton.disabled = true;
+    cooldownText.textContent = "Keine Spiel-Tokens mehr verfügbar.";
   } else {
     spinButton.disabled = false;
-    cooldownText.textContent = "";
+    cooldownText.textContent = `${SLOT_COST} Spiel-Tokens pro Dreh.`;
   }
 }
 
@@ -205,7 +216,7 @@ function jsonp(action, params = {}) {
 }
 
 function addPoints(klasse, points, game) {
-  return jsonp("add", { klasse, points, game, code: localStorage.getItem("abiVegasPlayerCode") || createPlayerCode() });
+  return jsonp("add", { klasse, points, game, code: AbiVegasDevice.playerCode() });
 }
 
 async function loadScores() {
@@ -227,3 +238,4 @@ function createPlayerCode() {
 }
 
 init();
+
