@@ -46,10 +46,18 @@ function serveAppPage_(requestedPage) {
   }
 
   const serviceUrl = ScriptApp.getService().getUrl();
+  const oldBackendUrl = "https://script.google.com/macros/s/AKfycbwX03awlXSE0UpGNAPfqugNwVJLqO_kv6ETfIaHREPLwBcwylxGbcjv3xWIjL1RWWGmHw/exec";
   let html = response.getContentText();
+  html = html.split(oldBackendUrl).join(serviceUrl);
   html = html.replace("</head>", '<base target="_top">\n</head>');
-  html = html.replace(/(href|src)="(?!https?:|#)([^"]+\.(?:css|js))"/g, function(match, attr, path) {
-    return attr + '="' + ASSET_ROOT + path + '"';
+  html = html.replace(/<script src="([^"]+\.js)"><\/script>/g, function(match, path) {
+    const scriptResponse = UrlFetchApp.fetch(STATIC_ROOT + path, { muteHttpExceptions: true });
+    if (scriptResponse.getResponseCode() !== 200) return match;
+    const script = scriptResponse.getContentText().split(oldBackendUrl).join(serviceUrl);
+    return "<script>\n" + script + "\n<\/script>";
+  });
+  html = html.replace(/href="(?!https?:|#)([^"]+\.css)"/g, function(match, path) {
+    return 'href="' + ASSET_ROOT + path + '"';
   });
   html = html.replace(/href="(index|event|roulette|blackjack|challenge|jackpot)\.html([^"]*)"/g, function(match, name, suffix) {
     return 'href="' + serviceUrl + '?page=' + name + '.html' + suffix + '"';
