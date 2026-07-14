@@ -8,22 +8,16 @@ const TEAMS = ["5", "6", "7", "8", "9", "10", "11", "12", "Lehrer"];
 const STARTING_CHIPS = 100;
 const MAX_POINTS_PER_ADD = 200;
 const BALANCE_MIGRATION_KEY = "ABV_TEAM_START_BALANCE_V1";
-const APP_URL = "https://zc9wrvwv86-lab.github.io/Abi-vegas-/";
+const STATIC_ROOT = "https://raw.githubusercontent.com/zc9wrvwv86-lab/Abi-vegas-/main/";
+const ASSET_ROOT = "https://cdn.jsdelivr.net/gh/zc9wrvwv86-lab/Abi-vegas-@main/";
+const APP_PAGES = ["index.html", "event.html", "roulette.html", "blackjack.html", "challenge.html", "jackpot.html"];
 
 function doGet(e) {
   const params = (e && e.parameter) || {};
 
-  // Falls der QR-Code noch auf die Apps-Script-Adresse zeigt, landet man trotzdem in der App.
+  // Ohne API-Aktion wird die eigentliche Abi-Vegas-App ausgeliefert.
   if (!params.action && !params.callback) {
-    return HtmlService.createHtmlOutput(
-      '<!doctype html><html lang="de"><head><meta charset="utf-8">' +
-      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-      '<meta http-equiv="refresh" content="0;url=' + APP_URL + '">' +
-      '<title>Abi Vegas</title></head><body>' +
-      '<p>Abi Vegas wird geoeffnet ... <a href="' + APP_URL + '">Zur App</a></p>' +
-      '<script>location.replace(' + JSON.stringify(APP_URL) + ');<\/script>' +
-      '</body></html>'
-    );
+    return serveAppPage_(params.page || "index.html");
   }
 
   const action = String(params.action || "scores");
@@ -42,6 +36,28 @@ function doGet(e) {
 
   return ContentService.createTextOutput(callback + "(" + JSON.stringify(result) + ")")
     .setMimeType(ContentService.MimeType.JAVASCRIPT);
+}
+
+function serveAppPage_(requestedPage) {
+  const page = APP_PAGES.indexOf(String(requestedPage)) !== -1 ? String(requestedPage) : "index.html";
+  const response = UrlFetchApp.fetch(STATIC_ROOT + page, { muteHttpExceptions: true });
+  if (response.getResponseCode() !== 200) {
+    throw new Error("App-Seite konnte nicht geladen werden.");
+  }
+
+  const serviceUrl = ScriptApp.getService().getUrl();
+  let html = response.getContentText();
+  html = html.replace("</head>", '<base target="_top">\n</head>');
+  html = html.replace(/(href|src)="(?!https?:|#)([^"]+\.(?:css|js))"/g, function(match, attr, path) {
+    return attr + '="' + ASSET_ROOT + path + '"';
+  });
+  html = html.replace(/href="(index|event|roulette|blackjack|challenge|jackpot)\.html([^"]*)"/g, function(match, name, suffix) {
+    return 'href="' + serviceUrl + '?page=' + name + '.html' + suffix + '"';
+  });
+
+  return HtmlService.createHtmlOutput(html)
+    .setTitle("Abi Vegas")
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function safeCallback_(value) {
