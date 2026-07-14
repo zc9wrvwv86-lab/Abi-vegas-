@@ -220,10 +220,5 @@ async function loadScores() {
   }
 }
 
-function createPlayerCode() {
-  const code = `player-${Math.random().toString(36).slice(2, 10)}`;
-  localStorage.setItem("abiVegasPlayerCode", code);
-  return code;
-}
 
 init();
