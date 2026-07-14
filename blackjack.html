@@ -302,7 +302,6 @@
         renderLeaderboard();
       }
       function renderLeaderboard() { leaderboard.innerHTML = Object.entries(state.scores).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>`<li><span>#${i+1} ${formatClassName(k)}</span><span class="chips">${v} Chips</span></li>`).join(""); }
-      function createPlayerCode() { const code = `player-${Math.random().toString(36).slice(2,10)}`; localStorage.setItem("abiVegasPlayerCode", code); return code; }
 
       init();
     </script>
